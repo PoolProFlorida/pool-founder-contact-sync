@@ -100,7 +100,7 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
 <body><main>
 <div class="eyebrow">Pool Pro Florida · Private administration</div>
 <h1>Pool Founder Contact Sync</h1>
-<p class="muted">Protected customer preview. This app is independent of your existing <code>/sync/</code> installation.</p>
+<p class="muted">Protected customer preview. Runs independently inside its own directory.</p>
 <?php if ($error !== ''): ?><p class="error"><?=h($error)?></p><?php endif; ?>
 <?php if ($notice !== ''): ?><p class="notice"><?=h($notice)?></p><?php endif; ?>
 <div class="panel">
