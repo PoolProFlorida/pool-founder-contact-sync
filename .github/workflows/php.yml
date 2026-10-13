@@ -26,3 +26,5 @@ jobs:
 
       - name: HTTP integration smoke test (fake data only)
         run: bash tests/http_smoke.sh
+      - name: Authenticated session and app-password HTTP smoke test (fake data only)
+        run: bash tests/auth_http_smoke.sh
