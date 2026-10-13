@@ -35,7 +35,9 @@ if ($method === 'POST') {
             $created = AppPasswords::create(is_string($_POST['label'] ?? null) ? $_POST['label'] : '');
         } elseif ($action === 'revoke') {
             $id = is_string($_POST['id'] ?? null) ? $_POST['id'] : '';
-            if (!AppPasswords::revoke($id)) {
+            if (($_POST['confirm'] ?? '') !== 'yes') {
+                $error = 'Confirm the client password before revoking access.';
+            } elseif (!AppPasswords::revoke($id)) {
                 $error = 'Password not found or already revoked.';
             } else {
                 header('Location: ' . $base . '/app-passwords.php?revoked=1', true, 303);
@@ -64,6 +66,16 @@ try {
 }
 $legacyActive = Config::get('CARDDAV_LEGACY_ENABLED', '1') !== '0';
 $davUsername = Config::get('CARDDAV_USERNAME');
+$revokeCandidate = null;
+$revokeId = is_string($_GET['revoke'] ?? null) ? $_GET['revoke'] : '';
+if (preg_match('/^[a-f0-9]{24}$/D', $revokeId)) {
+    foreach ($apps as $app) {
+        if (hash_equals($app['id'], $revokeId)) {
+            $revokeCandidate = $app;
+            break;
+        }
+    }
+}
 function hApp(string $value): string { return Http::escape($value); }
 ?>
 <!doctype html>
@@ -106,6 +118,22 @@ function hApp(string $value): string { return Http::escape($value); }
 
   <?php if ($error !== ''): ?><div class="alert error" role="alert"><?=hApp($error)?></div><?php endif; ?>
   <?php if (isset($_GET['revoked'])): ?><div class="alert success" role="status">The app password was revoked successfully.</div><?php endif; ?>
+
+  <?php if ($revokeCandidate !== null): ?>
+  <section class="card" aria-labelledby="revoke-confirm-heading">
+    <span class="eyebrow">Confirm access change</span>
+    <h2 id="revoke-confirm-heading">Revoke <?=hApp($revokeCandidate['label'])?>?</h2>
+    <div class="alert warning">This client will lose access immediately. Existing contacts and other app passwords won't be affected.</div>
+    <form method="post" action="<?=hApp($base . '/app-passwords.php')?>" class="action-row">
+      <input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
+      <input type="hidden" name="action" value="revoke">
+      <input type="hidden" name="id" value="<?=hApp($revokeCandidate['id'])?>">
+      <input type="hidden" name="confirm" value="yes">
+      <button type="submit" class="btn danger">Yes, revoke password</button>
+      <a class="btn secondary" href="<?=hApp($base . '/app-passwords.php')?>">Cancel</a>
+    </form>
+  </section>
+  <?php endif; ?>
 
   <?php if ($created !== null): ?>
   <section class="card" aria-labelledby="new-password-heading">
@@ -183,12 +211,7 @@ function hApp(string $value): string { return Http::escape($value); }
           <td><span class="cell-name"><?=hApp($app['label'])?></span></td>
           <td><?=hApp($app['created_at'])?></td>
           <td>
-            <form method="post" action="<?=hApp($base . '/app-passwords.php')?>">
-              <input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
-              <input type="hidden" name="action" value="revoke">
-              <input type="hidden" name="id" value="<?=hApp($app['id'])?>">
-              <button type="submit" class="btn compact danger" aria-label="Revoke <?=hApp($app['label'])?>">Revoke</button>
-            </form>
+            <a class="btn compact danger" href="<?=hApp($base . '/app-passwords.php?revoke=' . rawurlencode($app['id']))?>" aria-label="Review revocation for <?=hApp($app['label'])?>">Revoke</a>
           </td>
         </tr>
         <?php endforeach; ?>
