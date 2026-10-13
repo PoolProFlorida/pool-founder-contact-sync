@@ -130,6 +130,18 @@ Run inside the project directory:
 
 Your local .env and storage snapshot are excluded from Git. Make a backup before major upgrades. This application is confined to its own installation directory.
 
+## Validate CardDAV without a phone
+
+Once you have a complete saved customer snapshot, run the included **read-only protocol check** from the deployment directory:
+
+```bash
+php scripts/check-carddav.php https://example.com/pool-founder-contact-sync/carddav/
+```
+
+Replace the example URL with your installation's HTTPS CardDAV URL. The script uses the locally configured `CARDDAV_USERNAME` and `CARDDAV_PASSWORD`, verifies anonymous requests are rejected, discovers the principal and address book, runs an address-book REPORT, and validates one vCard GET and ETag if any cards exist. **It never writes contacts or prints names, phone numbers, addresses, API tokens, or downloaded vCard content.** It requires PHP cURL and DOM/XML extensions.
+
+If a check fails, the script prints the failing protocol stage. This is an interoperability smoke test, not full CardDAV conformance certification.
+
 ## Test
 
 From the checkout:
@@ -137,6 +149,7 @@ From the checkout:
     php tests/vcard_test.php
     php tests/api_inspector_test.php
     php tests/dav_test.php
+    php -l scripts/check-carddav.php
     php scripts/preview.php
 
 The preview script reads your API key from an environment variable, not the .env file. To run it manually:
