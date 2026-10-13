@@ -131,6 +131,11 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
     <input type="hidden" name="csrf" value="<?=h(Http::csrf($user))?>">
     <button type="submit" <?=$apiConfigured ? '' : 'disabled'?>>Fetch customers &amp; rebuild preview</button>
   </form>
+  <form method="post" action="<?=h($base . '/api-test.php')?>">
+    <input type="hidden" name="csrf" value="<?=h(Http::csrf($user))?>">
+    <button type="submit" <?=$apiConfigured ? '' : 'disabled'?>>Inspect live API response (masked)</button>
+  </form>
+  <p class="muted"><small>The API response test fetches up to 3 records without changing the saved snapshot. It shows JSON keys and nesting while hiding actual customer values.</small></p>
   <p class="muted"><small>Read-only Pool Founder API request. Snapshot is replaced only after a successful complete fetch. Customer records only until a read-only leads endpoint is verified. Addresses appear only if returned by the public API.</small></p>
   <?php if (!empty($snapshot['source_fields']) && is_array($snapshot['source_fields'])): ?>
   <details>
