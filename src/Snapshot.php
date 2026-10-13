@@ -38,13 +38,15 @@ final class Snapshot
             if (isset($contacts[$resource])) throw new \RuntimeException('Duplicate customer ID encountered');
             $card = VCard::fromCustomer($record);
             $addresses = [];
-            foreach (($record['serviceLocations'] ?? []) as $location) {
-                if (is_array($location) && isset($location['address']) && is_array($location['address'])) {
-                    $addresses[] = self::addressLabel($location['address']);
+            if (is_array($record['serviceLocations'] ?? null)) {
+                foreach ($record['serviceLocations'] as $location) {
+                    if (is_array($location) && isset($location['address'])) {
+                        $addresses[] = self::addressLabel($location['address']);
+                    }
                 }
             }
             foreach (['serviceAddress', 'address'] as $field) {
-                if (is_array($record[$field] ?? null)) $addresses[] = self::addressLabel($record[$field]);
+                if (isset($record[$field])) $addresses[] = self::addressLabel($record[$field]);
             }
             $contacts[$resource] = [
                 'resource' => $resource,
@@ -59,7 +61,9 @@ final class Snapshot
         uasort($contacts, static fn(array $a, array $b): int =>
             strcasecmp((string)$a['name'], (string)$b['name']) ?: strcmp((string)$a['resource'], (string)$b['resource'])
         );
-        $data = ['updated_at' => gmdate(DATE_ATOM), 'contacts' => $contacts];
+        $fields = $records !== [] ? array_keys($records[0]) : [];
+        sort($fields, SORT_STRING); // Names only, not customer values.
+        $data = ['updated_at' => gmdate(DATE_ATOM), 'source_fields' => $fields, 'contacts' => $contacts];
 
         $folder = dirname(self::file());
         if (!is_dir($folder) && !mkdir($folder, 0700, true) && !is_dir($folder)) {
@@ -86,13 +90,20 @@ final class Snapshot
         return $data;
     }
 
-    private static function addressLabel(array $a): string
+    private static function addressLabel(mixed $a): string
     {
+        if (is_string($a)) return trim($a);
+        if (!is_array($a)) return '';
         $parts = [];
-        foreach (['street','city','state','zipCode','country'] as $key) {
-            if (isset($a[$key]) && is_scalar($a[$key]) && (string)$a[$key] !== '') {
-                $parts[] = (string)$a[$key];
-            }
+        foreach ([
+            $a['street'] ?? $a['streetAddress'] ?? $a['addressLine1'] ?? null,
+            $a['street2'] ?? $a['addressLine2'] ?? null,
+            $a['city'] ?? null,
+            $a['state'] ?? $a['stateCode'] ?? null,
+            $a['zipCode'] ?? $a['postalCode'] ?? $a['zip'] ?? null,
+            $a['country'] ?? null
+        ] as $field) {
+            if (is_scalar($field) && trim((string)$field) !== '') $parts[] = trim((string)$field);
         }
         return implode(', ', $parts);
     }
