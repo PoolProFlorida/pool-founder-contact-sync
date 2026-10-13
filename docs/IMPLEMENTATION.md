@@ -10,7 +10,9 @@
 - Read-only CardDAV skeleton: principal and address book PROPFIND discovery, query/multiget REPORT, card GET/HEAD, OPTIONS, write-method denial
 - Fake demo snapshot generator and offline smoke tests
 
-**Not yet verified:** real API integration, CardDAV client interoperability on iOS/macOS, Apache/cPanel deployment and web access-denial checks.
+**Verified in a deployed environment (user-reported):** authenticated public customer API retrieval, dashboard preview/search, and six non-destructive CardDAV protocol checks: authentication challenge, principal discovery, home discovery, address-book discovery, address-book REPORT, individual vCard GET and ETag. The protocol check returned contacts successfully. No customer data or private installation details were committed.
+
+**Not yet verified:** broad client compatibility, independent security review, Apache access-denial behavior across hosting configurations, and lead/address support in public API.
 
 ## Next
 
