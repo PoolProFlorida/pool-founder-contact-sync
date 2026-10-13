@@ -37,6 +37,19 @@ Built by Pool Pro Florida, shared with the pool service community.
 - **Optional modern dashboard authentication**: hashed admin password, HTTPS-only sessions, sign out, CSRF validation and login-attempt throttling
 - **Revocable CardDAV app passwords**: unique secret per client, hashed at rest, with one-time display; legacy credentials remain active until intentionally disabled
 - Stable filenames derived from customer IDs; no WordPress, Cal.com, or AI dependency
+- Direct website link in each contact's vCard to that customer's authenticated Pool Founder web profile
+
+### Open a customer's Pool Founder profile from Contacts
+
+Each refreshed customer vCard contains a standard **Work website** entry based on the public API customer ID:
+
+```text
+https://www.poolfounder.com/dashboard/customers/{url-encoded-customer-id}
+```
+
+Tap the website field in your Contacts app to open that customer's Pool Founder dashboard profile. You may be prompted to sign in. The link could open a browser rather than the installed mobile app: **a native-app deep-link or universal-link handler has not been confirmed**, and the Pool Founder MCP does not offer a dedicated customer-link generator.
+
+After updating the code, click **Refresh contacts** once. The website entries will be generated in the refreshed snapshot and distributed with subsequent CardDAV synchronization. This changes contact cards only; no customer records are modified.
 
 ### Current limitations
 

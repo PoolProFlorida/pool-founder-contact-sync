@@ -78,6 +78,9 @@ card="$book$resource"
 code="$(curl -sS -u "$auth" -o "$response" -w '%{http_code}' "$card")"
 [[ "$code" == "200" ]] || { echo "Contact GET failed: HTTP $code" >&2; exit 1; }
 grep -q 'FN:Alex Example' "$response" || { echo "Downloaded vCard is missing the fake name" >&2; exit 1; }
+grep -q 'URL;TYPE=WORK:https://www.poolfounder.com/dashboard/customers/demo-only-001' "$response" || {
+    echo "Downloaded vCard is missing its customer profile link" >&2; exit 1;
+}
 
 code="$(curl -sS -u "$auth" -X PUT -o /dev/null -w '%{http_code}' "$card")"
 [[ "$code" == "403" ]] || { echo "Read-only write guard failed: HTTP $code" >&2; exit 1; }

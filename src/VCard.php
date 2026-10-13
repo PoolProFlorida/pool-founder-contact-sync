@@ -64,6 +64,13 @@ final class VCard
             'FN:' . self::escape($name),
             'N:' . self::escape($last) . ';' . self::escape($first) . ';;;'
         ];
+        // Customer records have a stable web profile URL. The browser may
+        // prompt for sign-in; this is NOT a customer-portal/share link or
+        // a promised mobile-app deep link.
+        // Encode the ID as ONE path component to prevent URL injection.
+        $lines[] = 'URL;TYPE=WORK:https://www.poolfounder.com/dashboard/customers/'
+            . rawurlencode($id);
+
         foreach (['company' => 'ORG', 'email' => 'EMAIL', 'phone' => 'TEL'] as $field => $key) {
             if (is_scalar($c[$field] ?? null) && trim((string)$c[$field]) !== '') {
                 $lines[] = $key . ':' . self::escape((string)$c[$field]);

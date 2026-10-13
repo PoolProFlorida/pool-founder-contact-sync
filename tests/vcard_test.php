@@ -25,6 +25,7 @@ $expected = [
     'BEGIN:VCARD', 'VERSION:3.0', 'UID:poolfounder-customer-cust-123',
     'FN:Jane Smith', 'N:Smith;Jane;;;', 'EMAIL:jane@example.com',
     'TEL:+15551234567',
+    'URL;TYPE=WORK:https://www.poolfounder.com/dashboard/customers/cust-123',
     'ADR;TYPE=WORK:;;123 Pool Lane;Port St. Lucie;FL;34987;United States',
     'NOTE:Service days: Tuesday', 'END:VCARD'
 ];
@@ -55,4 +56,16 @@ if (!str_contains($unfolded, 'FN:' . $longName)) {
 if (!str_contains($unfolded, 'ADR;TYPE=WORK:;;123 Example Avenue')) {
     throw new RuntimeException('String service address was omitted');
 }
+
+$unsafeId = 'customer/a?tab=private#section';
+$encodedCard = VCard::fromCustomer(['id' => $unsafeId, 'name' => 'Safe URL Fixture']);
+$unfoldedUrlCard = str_replace("\r\n ", '', $encodedCard);
+$expectedUrl = 'URL;TYPE=WORK:https://www.poolfounder.com/dashboard/customers/' . rawurlencode($unsafeId);
+if (!str_contains($unfoldedUrlCard, $expectedUrl . "\r\n")) {
+    throw new RuntimeException('The customer URL must encode the ID as one path component');
+}
+if (substr_count($unfoldedUrlCard, 'URL;TYPE=WORK:') !== 1) {
+    throw new RuntimeException('Exactly one website field should be included');
+}
+
 echo "vCard fixture and UTF-8 folding tests passed.\n";
