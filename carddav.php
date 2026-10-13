@@ -2,14 +2,16 @@
 declare(strict_types=1);
 require __DIR__ . '/src/Config.php';
 require __DIR__ . '/src/Http.php';
+require __DIR__ . '/src/AppPasswords.php';
+require __DIR__ . '/src/CardDavAuth.php';
 require __DIR__ . '/src/Snapshot.php';
 require __DIR__ . '/src/Dav.php';
 
-use PoolProFlorida\Http;
+use PoolProFlorida\CardDavAuth;
 use PoolProFlorida\Snapshot;
 use PoolProFlorida\Dav;
 
-$user = Http::guard();
+$user = CardDavAuth::guard();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 header('DAV: 1, addressbook');
 header('MS-Author-Via: DAV');
