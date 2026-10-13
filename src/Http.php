@@ -20,7 +20,8 @@ final class Http
 
         $expectedUser = Config::get('CARDDAV_USERNAME');
         $expectedPass = Config::get('CARDDAV_PASSWORD');
-        if ($expectedUser === '' || strlen($expectedPass) < 16 || $expectedPass === 'change-me') {
+        if ($expectedUser === '' || strlen($expectedPass) < 16 || $expectedPass === 'change-me'
+            || str_starts_with($expectedPass, 'replace-with-')) {
             http_response_code(503);
             header('Content-Type: text/plain; charset=utf-8');
             exit("Application not configured. Set CARDDAV_USERNAME and a strong CARDDAV_PASSWORD.\n");
