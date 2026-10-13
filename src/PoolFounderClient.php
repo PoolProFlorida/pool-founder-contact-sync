@@ -19,6 +19,28 @@ final class PoolFounderClient
         return $this->paginate('/api/v1/customers');
     }
 
+    /**
+     * Fetch one small, current API page for the authenticated structure test.
+     * The caller must redact ALL values before presenting the response.
+     * This does not touch the saved customer snapshot.
+     */
+    public function customerSample(int $limit = 3): \stdClass
+    {
+        $limit = max(1, min(5, $limit));
+        $url = rtrim($this->baseUrl, '/') . '/api/v1/customers?'
+            . http_build_query(['limit' => $limit]);
+        [$status, $body] = $this->request($url);
+        if ($status !== 200 || !is_string($body)) {
+            throw new \RuntimeException('Pool Founder request failed: HTTP ' . $status);
+        }
+        $response = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
+        if (!$response instanceof \stdClass || !isset($response->data) ||
+            !is_array($response->data) || !property_exists($response, 'nextCursor')) {
+            throw new \RuntimeException('Unexpected customer API response structure');
+        }
+        return $response;
+    }
+
     public function paginate(string $path): array
     {
         $records = [];
