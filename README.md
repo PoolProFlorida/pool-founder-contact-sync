@@ -49,8 +49,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 
 Example deployment:
 
-    /home/ACCOUNT/public_html/
-    ├── sync/                         # Your existing tool — DO NOT MODIFY
+    /path/to/your-web-root/
     └── pool-founder-contact-sync/    # This Git repository
         ├── .htaccess
         ├── .env                      # Create this locally; never commit
@@ -61,9 +60,9 @@ Example deployment:
         ├── scripts/
         └── tests/
 
-From your server's SSH shell (replace ACCOUNT with your real username):
+From an SSH shell, replace the sample web-root path with your own:
 
-    cd /home/ACCOUNT/public_html
+    cd /path/to/your-web-root
     git clone https://github.com/PoolProFlorida/pool-founder-contact-sync.git
     cd pool-founder-contact-sync
     cp .env.example .env
@@ -82,8 +81,8 @@ The PHP/web-server account must have write permission to storage. On shared host
 
 Open:
 
-- **Dashboard:** https://poolproflorida.com/pool-founder-contact-sync/
-- **CardDAV:** https://poolproflorida.com/pool-founder-contact-sync/carddav/
+- **Dashboard:** https://example.com/pool-founder-contact-sync/
+- **CardDAV:** https://example.com/pool-founder-contact-sync/carddav/
 
 Both endpoints require the configured username and password. The dashboard lets you refresh customer data and click **View** or **VCF** for a contact.
 
@@ -112,7 +111,7 @@ Run inside the project directory:
 
     git pull --ff-only origin main
 
-Your local .env and storage snapshot are excluded from Git. Make a backup before major upgrades. This tool does not touch the existing /sync/ application.
+Your local .env and storage snapshot are excluded from Git. Make a backup before major upgrades. This application is confined to its own installation directory.
 
 ## Test
 
@@ -132,7 +131,7 @@ On the server, use an authenticated PROPFIND request to confirm DAV XML, for exa
 
     curl -i -u 'poolcontacts:YOUR_PASSWORD' -X PROPFIND \
       -H 'Depth: 0' \
-      https://poolproflorida.com/pool-founder-contact-sync/carddav/
+      https://example.com/pool-founder-contact-sync/carddav/
 
 Do not paste your real password into shared terminals or logs; use a safer credential method where possible. Client compatibility is not yet certified.
 
