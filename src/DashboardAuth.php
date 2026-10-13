@@ -3,8 +3,8 @@ declare(strict_types=1);
 namespace PoolProFlorida;
 
 /**
- * Opt-in password-hashed dashboard login. Existing installations keep Basic
- * Auth until BOTH DASHBOARD_USERNAME and DASHBOARD_PASSWORD_HASH are configured.
+ * Session-only dashboard login. Both DASHBOARD_USERNAME and
+ * DASHBOARD_PASSWORD_HASH must be configured; missing values fail closed.
  * CardDAV credentials and authentication remain separate.
  */
 final class DashboardAuth
@@ -16,8 +16,7 @@ final class DashboardAuth
     {
         $name = Config::get('DASHBOARD_USERNAME');
         $hash = Config::get('DASHBOARD_PASSWORD_HASH');
-        if ($name === '' && $hash === '') return false;
-        if ($name === '' || $hash === '' || password_get_info($hash)['algo'] === null) {
+         if ($name === '' || $hash === '' || password_get_info($hash)['algo'] === null) {
             // PHP versions disagree whether unknown hash algo is null or 0.
             self::unconfigured();
         }
@@ -80,7 +79,7 @@ final class DashboardAuth
 
     public static function guard(): string
     {
-        if (!self::enabled()) return Http::guard();
+        self::enabled();
         if (!self::signedIn()) {
             header('Location: ' . Http::base() . '/login.php', true, 303);
             exit;
@@ -90,7 +89,7 @@ final class DashboardAuth
 
     public static function logIn(string $name, string $password): bool
     {
-        if (!self::enabled()) return false;
+        self::enabled();
         self::start();
         $expectedName = Config::get('DASHBOARD_USERNAME');
         $valid = hash_equals($expectedName, $name)
@@ -120,7 +119,7 @@ final class DashboardAuth
 
     public static function csrf(string $user): string
     {
-        if (!self::enabled()) return Http::csrf($user);
+        self::enabled();
         self::start();
         if (!isset($_SESSION['csrf']) || !is_string($_SESSION['csrf'])) {
             $_SESSION['csrf'] = bin2hex(random_bytes(32));
@@ -130,7 +129,7 @@ final class DashboardAuth
 
     public static function validCsrf(string $user, string $candidate): bool
     {
-        if (!self::enabled()) return Http::validCsrf($user, $candidate);
+        self::enabled();
         self::start();
         return $candidate !== '' && isset($_SESSION['csrf'])
             && is_string($_SESSION['csrf'])
