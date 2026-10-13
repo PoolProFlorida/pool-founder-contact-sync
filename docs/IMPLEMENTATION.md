@@ -1,39 +1,45 @@
 # Implementation status
 
-## Implemented (release candidate)
+## Working features
 
-- Standalone PHP deployment beneath a site subdirectory, protected by scoped Apache rules
-- Responsive production-oriented admin dashboard for refresh, contact search and individual vCard download; no browser-facing API debug views
-- Customer API GET /api/v1/customers with cursor pagination
-- Atomic local JSON snapshot storage; incomplete/failing requests preserve the previous snapshot
-- Customer vCard generation and multi-service-location mapping when the public API provides address fields
-- Read-only CardDAV skeleton: principal and address book PROPFIND discovery, query/multiget REPORT, card GET/HEAD, OPTIONS, write-method denial
-- Optional hashed-password dashboard login with secure cookie sessions, logout, CSRF validation and persistent login-attempt throttling
-- Read-only CardDAV app passwords: distinct hashed secrets for individual clients, one-time display, and revocation
-- Migration-safe authentication defaults (old CardDAV password retained until explicitly disabled); separate credential setup instructions in [AUTHENTICATION.md](AUTHENTICATION.md)
-- CLI-only deployment checks for private-file exposure, login, DAV authentication and static stylesheet access
-- Fake demo snapshot generator and CI-only offline smoke tests
+- Standalone PHP installation under an Apache/cPanel site subdirectory with protected private files
+- Private dashboard: contact count, manual refresh, search/filter, vCard preview and download
+- Optional separate dashboard sign-in with secure sessions, CSRF protection, login throttling, and logout
+- Per-client revocable CardDAV app passwords; opt-in migration from legacy CardDAV credentials
+- Customer fetch from documented read-only `GET /api/v1/customers` with pagination
+- Snapshot writes that preserve previous data when fetching fails, is incomplete, or causes a suspicious mass deletion
+- Read-only CardDAV: discovery, PROPFIND, REPORT, GET/HEAD and write-method denial
+- Customer website links in vCards (web dashboard; native app launch not confirmed)
+- Optional server cron refresh via `scripts/sync.php`; authenticated dashboard shows a copyable 30-minute schedule and CLI command
+- Fake-data automated PHP, auth, pagination, vCard, CardDAV, cron, and HTTP integration tests
 
-**Verified in a deployed environment (user-reported):** authenticated public customer API retrieval, dashboard preview/search, and six non-destructive CardDAV protocol checks: authentication challenge, principal discovery, home discovery, address-book discovery, address-book REPORT, individual vCard GET and ETag. The protocol check returned contacts successfully. No customer data or private installation details were committed.
+## What has been tested
 
-**CI verified:** PHP syntax; session sign-in and logout; login throttling; per-client app-secret hashing and revocation; fake-data HTTP CardDAV legacy compatibility; and existing vCard/DAV tests.
+**On one real installation, user-reported:** successful public customer API retrieval, authenticated dashboard, manual refresh, iPhone CardDAV contact synchronization, customer profile website links opening in a browser, and non-destructive DAV checks. Earlier deployment hardening checks reported 11 passes for secret-file denial, dashboard/DAV authentication and CSS access. Those checks preceded the newer admin clipboard JavaScript asset; the updated deployment check covers that asset as well.
 
-**Deployed access checks (user-reported):** all 11 non-destructive HTTPS checks passed: private .env, Git metadata, customer snapshot, app-password store, application source, scripts, tests, and the retired diagnostic route were denied; unauthenticated dashboard and CardDAV requests were rejected; the admin stylesheet was served successfully. This is a basic access-control verification, not a security audit, and no hosting identifiers or customer data are published.
+**Automated CI:** PHP syntax, contact/field privacy, authentication and app-password management, customer pagination/search, vCard content, DAV behavior, cron-command generation and fake-data HTTP smoke tests. Each merged feature PR passed its tests.
 
-**Not yet verified:** visual review and a fresh contact sync through the redesigned dashboard, broad CardDAV client interoperability, independent security review, Apache access-denial rules on other hosts, and lead/address support in the public API.
+## Remaining limitations
 
-## Next
+- The documented public API supports customer listing; no verified public read/list-leads API for this project
+- Service addresses only appear when public API responses provide them; sampled records did not include those fields
+- iPhone customer website links open the web dashboard; a native-app Universal Link/deep-link handler has not been confirmed
+- iPhone sync has been exercised on one installation, but interoperability across clients and hosts remains unverified
+- Cron command generation exists; **cron scheduling itself must be configured by each administrator in cPanel or another server scheduler**
+- No independent security audit has been performed
 
-1. Complete the remaining [production checklist](PRODUCTION_CHECKLIST.md) steps: visually review the redesigned admin, verify manual refresh keeps contact counts plausible, and recheck CardDAV access after the update.
-2. Run non-destructive DAV checks for multiget, conditional GET/ETag and read-only method rejection; do not require a phone.
-3. Review portability and security with external testers before marking a stable community release.
-4. Wait for documented public read-only service address and lead APIs before mapping those fields.
-5. After verified operation, offer optional server-side scheduled refresh with conservative defaults.
+## Next steps
+
+1. Collect more real-world CardDAV client compatibility results without publishing customer records.
+2. Verify scheduled cron operation on each deployment using the dashboard's last successful refresh time.
+3. Seek an independent security review before describing this as a broadly production-ready release.
+4. Support service addresses and leads only if documented read-only public API endpoints/fields are available.
 
 ## Security invariants
 
-- Pool Founder access is read-only; the app does not modify other applications or installations.
-- Never expose API keys, CardDAV password, saved contacts, internal notes, gate codes or pricing through the public repo or unauthenticated HTTP.
-- Both dashboard and CardDAV demand HTTPS. Admin login may use a secure cookie session; CardDAV uses read-only app passwords via HTTPS Basic Auth.
-- Existing saved snapshot survives failed, incomplete or unexpectedly empty API reads.
-- Each vCard gets a stable internal filename derived from its source customer ID.
+- Never commit API keys, app passwords, contact snapshots, service notes, gate codes, pricing, or installation secrets.
+- Customer API access is read-only; CardDAV denies writes; no external production systems are changed.
+- Failed/incomplete/suspicious fetches keep the last known-good snapshot.
+- Keep authentication, snapshots, and logs restricted on each host. Validate deployment access controls with `scripts/check-deployment.php`.
+
+See [README](../README.md), [production checklist](PRODUCTION_CHECKLIST.md), [authentication migration](AUTHENTICATION.md), and [public API field requests](PUBLIC_API_FIELDS.md).

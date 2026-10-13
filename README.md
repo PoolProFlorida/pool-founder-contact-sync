@@ -1,236 +1,112 @@
 # Pool Founder Contact Sync
 
-**Know who's calling. One address book. Customers (and eventually leads) right on your phone.**
+**Know who's calling before you answer.**
 
-A self-hosted, read-only PHP CardDAV project for [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) users.
+A self-hosted, read-only customer address book for [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida). Built in PHP, it pulls customer contact details from Pool Founder's documented public API and syncs them to iPhone Contacts (or another compatible CardDAV client).
 
-> **Status: Release candidate — deployment verification required.** Live customer retrieval, private administration, and a deployed CardDAV endpoint have passed their initial checks. Automated PHP and HTTP integration tests cover the admin login, app-password management and read-only DAV behavior. **Full client interoperability and an independent security audit have not been completed.** Before public deployment, complete the [production checklist](docs/PRODUCTION_CHECKLIST.md). Service addresses and leads depend on documented public API support.
+**Independent project by [Pool Pro Florida](https://poolproflorida.com). Not an official Pool Founder product.**
 
-## Why We Built This
+> **Status:** Working on a real iPhone/CardDAV installation, with automated PHP and HTTP tests. Other hosting setups and CardDAV clients have not been broadly tested; no independent security audit has been completed. See the [production checklist](docs/PRODUCTION_CHECKLIST.md).
 
-Hate getting a phone call and not knowing which customer is calling? We do too.
+## What it does
 
-[Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) already keeps track of your customers, leads, and service information. You can always open the app to find what you need. But why should you have to?
+- **Customer caller ID:** Names, phone numbers, emails, and service days when supplied by the public API.
+- **Private, read-only CardDAV:** Contacts sync to your phone; no edits are sent back to Pool Founder.
+- **Customer profile links:** Each contact has a Work website link to its Pool Founder customer page. On iPhone, this currently opens the web page, **not necessarily the native app**.
+- **Admin dashboard:** Refresh, search, filter, preview, and download contacts.
+- **Safer access:** Optional separate dashboard login, secure sessions, and revocable CardDAV app passwords.
+- **Refresh options:** Manual dashboard refresh, or an optional cron job. The dashboard supplies a copyable command for a **30-minute** schedule.
+- **Failure protection:** Refreshes retain the last good snapshot on errors, incomplete responses, or suspicious large drops in contact count.
 
-That's why we built Pool Founder Contact Sync.
+Runs on Apache/cPanel with PHP. No WordPress, AI, or extra phone app required.
 
-It brings your customers and leads into your phone's native contacts, so you know who's calling before you answer. Customer names, service addresses, and other useful details are right there when you need them.
+**Current limits:** This build syncs **customers only**, not leads. Service addresses appear only if Pool Founder's public customer API supplies them; they were absent in sampled responses. See [public API field requests](docs/PUBLIC_API_FIELDS.md). Native-app deep links are not confirmed.
 
-No replacing Pool Founder. No extra app to manage. Just making the phone you already carry a little smarter.
+## Install
 
-Built by Pool Pro Florida, shared with the pool service community.
+**Requirements:** PHP 8.1+ with cURL and DOM/XML, Apache 2.4+ with working `.htaccess` / `mod_rewrite`, HTTPS, and writable private storage.
 
-**Community Over Competition.**
+Install in its own website subdirectory:
 
-*The paragraph above describes the product's goal. The current build syncs customers only; leads and service addresses depend on available read-only Pool Founder API fields.*
-
-## What works in this build
-
-- Self-contained PHP application installed in a **subdirectory** of an Apache/cPanel website
-- Clean, responsive private administration to refresh customers, search contacts and download individual vCards
-- A consistent login screen and app-password management, with no customer API debugging output exposed through the browser
-- CLI-only deployment access checks for secrets, private storage, CardDAV authentication and public asset delivery
-- Read-only customer fetch using documented GET /api/v1/customers with cursor pagination
-- Saved local snapshot: failed/partial fetches and suspicious mass deletions do **not** replace the previous contacts
-- Initial read-only CardDAV endpoints for principal discovery, PROPFIND, REPORT, GET, and HEAD
-- Separate credentials for API access and CardDAV access
-- **Optional modern dashboard authentication**: hashed admin password, HTTPS-only sessions, sign out, CSRF validation and login-attempt throttling
-- **Revocable CardDAV app passwords**: unique secret per client, hashed at rest, with one-time display; legacy credentials remain active until intentionally disabled
-- Stable filenames derived from customer IDs; no WordPress, Cal.com, or AI dependency
-- Direct website link in each contact's vCard to that customer's authenticated Pool Founder web profile
-
-### Open a customer's Pool Founder profile from Contacts
-
-Each refreshed customer vCard contains a standard **Work website** entry based on the public API customer ID:
-
-```text
-https://www.poolfounder.com/dashboard/customers/{url-encoded-customer-id}
+```bash
+cd /path/to/your-web-root
+git clone https://github.com/PoolProFlorida/pool-founder-contact-sync.git
+cd pool-founder-contact-sync
+cp .env.example .env
+chmod 600 .env
+chmod 700 storage
 ```
 
-Tap the website field in your Contacts app to open that customer's Pool Founder dashboard profile. You may be prompted to sign in. The link could open a browser rather than the installed mobile app: **a native-app deep-link or universal-link handler has not been confirmed**, and the Pool Founder MCP does not offer a dedicated customer-link generator.
+Edit the **private server-side** `.env`:
 
-After updating the code, click **Refresh contacts** once. The website entries will be generated in the refreshed snapshot and distributed with subsequent CardDAV synchronization. This changes contact cards only; no customer records are modified.
+```dotenv
+POOL_FOUNDER_API_KEY=your-own-api-key
+CARDDAV_USERNAME=poolcontacts
+CARDDAV_PASSWORD=your-own-long-random-password
+```
 
-### Current limitations
+Use a unique password of at least 16 characters. The API key is for the documented **read-only customer endpoint**. Never commit `.env`, saved contacts, or passwords.
 
-- **Customer-only** until a public read/list-leads API is verified.
-- Service addresses are included **only if the public API supplies them**. An authenticated three-record customer-list sample had no address field. See [public API field requirements](docs/PUBLIC_API_FIELDS.md) for a proposed read-only API extension.
-- No lead-to-customer duplicate reconciliation yet.
-- CardDAV uses Basic Auth over HTTPS (legacy or per-client app password). The dashboard can separately use cookie sessions. No client can write changes back to Pool Founder.
-- The CardDAV handler is an early implementation; client interoperability, including Apple Contacts, must be tested.
-- No cron schedule is installed automatically. Refresh manually from the dashboard or run the optional CLI script from your own scheduler.
+**Before adding real data**, verify the web server blocks direct public access to `.env`, `.git`, `src/`, `scripts/`, and `storage/`. If Apache ignores `.htaccess`, do not deploy under the public web root. Follow the [production checklist](docs/PRODUCTION_CHECKLIST.md).
 
-## Improved authentication (opt-in)
+Open the HTTPS dashboard at:
 
-A new dashboard login and independently revocable CardDAV client passwords are available **without changing existing credentials on upgrade**.
+```text
+https://example.com/pool-founder-contact-sync/
+```
 
-See the step-by-step [authentication migration and rollback guide](docs/AUTHENTICATION.md). The new login activates only when **both** DASHBOARD_USERNAME and DASHBOARD_PASSWORD_HASH are configured in the private server .env. Use the interactive hash generator:
+Click **Refresh contacts** to build the first snapshot. Your private CardDAV endpoint is:
 
-    php scripts/hash-dashboard-password.php
+```text
+https://example.com/pool-founder-contact-sync/carddav/
+```
 
-After signing in, choose **Manage CardDAV app passwords**. Issue one password per client. Your previous CardDAV username and password continue to work until you deliberately set CARDDAV_LEGACY_ENABLED=0 after validating the replacements.
+Add that address book as a **CardDAV account** on your phone, using the CardDAV username and password. For separate per-device passwords and a dashboard sign-in screen, follow the [authentication setup](docs/AUTHENTICATION.md). Preserve your existing CardDAV username when upgrading.
 
-**Do not turn off the legacy CardDAV password or alter your CardDAV username during the initial upgrade.**
+## Automatic sync
 
-## Install in a subdirectory
+**Phone ↔ address book:** Your CardDAV client periodically retrieves the current server snapshot.
 
-**Requirements:** Apache 2.4+ with .htaccess / mod_rewrite enabled, PHP 8.1+ with cURL and DOM/XML extensions, HTTPS, and a writable private storage directory. Use a dedicated URL and private credentials.
+**Pool Founder → server:** Click **Refresh contacts**, or schedule the CLI worker. The **Automatic refresh** section in the logged-in dashboard provides Copy buttons for:
 
-Example deployment:
+- **Schedule:** Every 30 minutes (`*/30 * * * *`)
+- **Command:** Your installation's local PHP CLI command (with no embedded credentials)
 
-    /path/to/your-web-root/
-    └── pool-founder-contact-sync/    # This Git repository
-        ├── .htaccess
-        ├── .env                      # Create this locally; never commit
-        ├── index.php                 # Protected administration dashboard
-        ├── carddav.php
-        ├── src/
-        ├── storage/                  # Private snapshot, not web-accessible
-        ├── scripts/
-        └── tests/
+In **cPanel → Cron Jobs**, choose Every 30 Minutes and paste the generated command into the **Command** field. **The dashboard does not install the cron job for you.** Verify it runs by checking **Last successful refresh** afterward. Your host may require a different PHP CLI executable; set `CRON_PHP_BINARY` in your private `.env` if needed.
 
-From an SSH shell, replace the sample web-root path with your own:
+For a manual CLI refresh from the project directory:
 
-    cd /path/to/your-web-root
-    git clone https://github.com/PoolProFlorida/pool-founder-contact-sync.git
-    cd pool-founder-contact-sync
-    cp .env.example .env
-    chmod 600 .env
-    chmod 700 storage
+```bash
+php scripts/sync.php
+```
 
-Edit .env on **the server**:
+The worker does not print customer data. If fetching fails or the contact count drops unexpectedly, it keeps the previous snapshot.
 
-    POOL_FOUNDER_API_KEY=your-real-api-key
-    CARDDAV_USERNAME=poolcontacts
-    CARDDAV_PASSWORD=some-long-unique-random-password
+## Verify your deployment
 
-Use a new dedicated CardDAV password of at least 16 characters. Avoid characters requiring special dotenv quoting unless you quote the value; this app accepts plain KEY=VALUE and matching single/double outer quotes.
-
-The PHP/web-server account must have write permission to storage. On shared hosting, PHP usually runs as your cPanel account; adjust ownership/permissions only if necessary. Do **not** make storage world-writable.
-
-Open:
-
-- **Dashboard:** https://example.com/pool-founder-contact-sync/
-- **CardDAV:** https://example.com/pool-founder-contact-sync/carddav/
-
-The dashboard uses a separate cookie-based login when configured, or the older Basic Auth flow until migrated. CardDAV clients use HTTPS Basic Auth with individually revocable app passwords. The dashboard provides contact counts, a manual refresh action, search/filtering, vCard downloads, and access to app-password management.
-
-### Public API field availability
-
-Service addresses appeared in none of the three masked customer records sampled during development; this is a public API field limitation, not a reason to expose raw customer responses in the dashboard. See [public API field requirements](docs/PUBLIC_API_FIELDS.md). Browser diagnostics are removed from the production administration.
-
-**Before entering any real credentials or fetching customer data**, verify that your server blocks direct HTTP access to:
-
-- /pool-founder-contact-sync/.env
-- /pool-founder-contact-sync/.git/HEAD
-- /pool-founder-contact-sync/storage/contacts.json
-- /pool-founder-contact-sync/src/Config.php
-
-They should return 403/404, never their contents. Verify HTTPS is enabled and the dashboard returns 401 when unauthenticated. If the server ignores .htaccess, **do not use this webroot deployment** until it is fixed or you move private files outside the document root.
-
-## Try it with fake data first
-
-Before connecting your Pool Founder API key, you can verify the dashboard and vCard links using one fake contact:
-
-    php scripts/demo.php
-
-This command works only in the terminal and **refuses to overwrite an existing snapshot**. Set your CardDAV username/password in `.env`, open the protected dashboard, then click **View** and **VCF**. The demo is visibly fake (`example.invalid` email and example address).
-
-When ready for real customers, click **Refresh contacts** on the dashboard after adding your real API key. A successful full refresh replaces the demo snapshot. If the refresh fails, the demo stays in place. Do not connect a production phone while demo data is loaded.
-
-## Optional scheduled refresh
-
-The private admin dashboard includes an **Automatic refresh** section with copy buttons for both the cron expression and the server-specific command. The default is every 30 minutes.
-
-In **cPanel → Advanced → Cron Jobs**, choose the *Every 30 Minutes* schedule (or set Minute to `*/30` and Hour, Day, Month, Weekday to `*`). Paste the command copied from **your own logged-in dashboard** into cPanel's **Command** box, then add the cron job. The dashboard shows setup instructions only; it does **not** create or enable a job for you.
-
-The command invokes the local CLI file at its actual installed path, without embedding credentials or using an HTTP URL. It silences successful refresh output while leaving errors on stderr so cPanel cron email can report failures if notifications are configured.
-
-**PHP executable paths differ among hosts.** The dashboard prefers a version-matched cPanel CLI binary when available, then common CLI paths. If cPanel requires a different executable, edit the start of the command in cPanel or set `CRON_PHP_BINARY=/absolute/path/to/php` in your private `.env`. Use PHP 8.1+ with the required extensions. Run the command once manually, or compare the dashboard's **Last successful refresh** after a scheduled run, to confirm that scheduling really works.
-
-To refresh from a trusted terminal or an existing cron scheduler:
-
-    php scripts/sync.php
-
-This command reads your local `.env`, fetches all customer pages and writes a snapshot only after a complete successful response. On a failure it returns a nonzero exit status and preserves your last snapshot. It also **refuses unexpectedly large drops in customer count** (more than 25% when 10+ contacts were previously saved). That safeguard prevents a broken upstream response from removing most of a phone's contacts. To accept a truly intentional mass removal, review the data and make a backup before resetting the existing snapshot.
-
-Do not set up a cron schedule until the first manual refresh and CardDAV tests work.
-
-## Update
-
-Run inside the project directory:
-
-    git pull --ff-only origin main
-
-Your local .env and storage snapshot are excluded from Git. Make a backup before major upgrades. This application is confined to its own installation directory. See [production upgrade and security checks](docs/PRODUCTION_CHECKLIST.md) before applying changes.
-
-## Production deployment checks
-
-Before treating a deployment as production-ready, run the non-destructive external access check from the application directory:
+Run these non-destructive checks from the installed directory:
 
 ```bash
 php scripts/check-deployment.php https://example.com/pool-founder-contact-sync/
-```
-
-This checks that private files, customer snapshots, internal scripts and old debug endpoints are not reachable over public HTTPS. It also verifies that the dashboard and CardDAV reject unauthenticated requests. It does not display any saved customer records or credentials. **A successful check does not replace a security audit.** See the [production checklist](docs/PRODUCTION_CHECKLIST.md).
-
-## Validate CardDAV without a phone
-
-Once you have a complete saved customer snapshot, run the included **read-only protocol check** from the deployment directory:
-
-```bash
 php scripts/check-carddav.php https://example.com/pool-founder-contact-sync/carddav/
 ```
 
-Replace the example URL with your installation's HTTPS CardDAV URL. The script uses the locally configured `CARDDAV_USERNAME` and `CARDDAV_PASSWORD`, verifies anonymous requests are rejected, discovers the principal and address book, runs an address-book REPORT, and validates one vCard GET and ETag if any cards exist. **It never writes contacts or prints names, phone numbers, addresses, API tokens, or downloaded vCard content.** It requires PHP cURL and DOM/XML extensions.
+The first checks public file access and unauthenticated endpoints; the second checks read-only CardDAV discovery and retrieval. Neither is a substitute for a security audit. The CardDAV check uses local credentials; for app-password-only installations, see the [production checklist](docs/PRODUCTION_CHECKLIST.md).
 
-If a check fails, the script prints the failing protocol stage. This is an interoperability smoke test, not full CardDAV conformance certification.
+For isolated, **fake-data** tests in a disposable checkout, GitHub Actions runs the PHP, authentication, vCard, CardDAV, cron, and HTTP smoke tests. **Never run demo or destructive test fixtures on your active installation.**
 
-## Test
+## Update safely
 
-From the checkout:
+From the installed project directory:
 
-    php tests/vcard_test.php
-    php tests/api_inspector_test.php
-    php tests/dav_test.php
-    php -l scripts/check-carddav.php
-    php scripts/preview.php
+```bash
+git pull --ff-only origin main
+```
 
-The preview script reads your API key from an environment variable, not the .env file. To run it manually:
-
-    POOL_FOUNDER_API_KEY='YOUR_KEY' php scripts/preview.php
-
-The snapshot refresh in the dashboard reads .env automatically.
-
-On the server, use an authenticated PROPFIND request to confirm DAV XML, for example:
-
-    curl -i -u 'poolcontacts:YOUR_PASSWORD' -X PROPFIND \
-      -H 'Depth: 0' \
-      https://example.com/pool-founder-contact-sync/carddav/
-
-Do not paste your real password into shared terminals or logs; use a safer credential method where possible. Client compatibility is not yet certified.
-
-## Security
-
-- **Never commit credentials or customer data to this public repository.**
-- Dashboard account password is stored only as a password hash; CardDAV client app passwords are stored only as hashes and may be revoked separately.
-- New dashboard login and CardDAV migration are opt-in; see the linked migration guide before enabling.
-- API key is used only for read-only GET customer calls; this project does not edit Pool Founder.
-- All protected interfaces require HTTPS. The dashboard supports secure session login, while CardDAV clients authenticate with HTTPS Basic Auth and revocable app passwords.
-- The Apache .htaccess file denies access to private application directories and dotfiles. Check these rules on your particular host before going live.
-- Failed API fetches leave the previous saved snapshot intact.
-- Treat backups and the storage directory as sensitive personal data.
+Back up your private `.env` and entire `storage/` directory before major updates. Both stay outside Git. See [upgrade and rollback steps](docs/PRODUCTION_CHECKLIST.md).
 
 ## Community Over Competition
 
-Created by **[Pool Pro Florida](https://poolproflorida.com)** for the pool service community.
+Built and shared by **[Pool Pro Florida](https://poolproflorida.com)** for other pool service professionals. Contributions are welcome: [Contributing](CONTRIBUTING.md) · [MIT License](LICENSE).
 
-Independent community project, not an official [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) product.
-
-## Contributing
-
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-[MIT](LICENSE).
+[GitHub issues](https://github.com/PoolProFlorida/pool-founder-contact-sync/issues) · [Implementation notes](docs/IMPLEMENTATION.md)
