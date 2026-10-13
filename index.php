@@ -115,6 +115,13 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
     <button type="submit" <?=$apiConfigured ? '' : 'disabled'?>>Fetch customers &amp; rebuild preview</button>
   </form>
   <p class="muted"><small>Read-only Pool Founder API request. Snapshot is replaced only after a successful complete fetch. Customer records only until a read-only leads endpoint is verified. Addresses appear only if returned by the public API.</small></p>
+  <?php if (!empty($snapshot['source_fields']) && is_array($snapshot['source_fields'])): ?>
+  <details>
+    <summary>Fields returned by the customer API</summary>
+    <p class="muted"><small><?=h(implode(', ', array_filter($snapshot['source_fields'], 'is_string')))?></small></p>
+    <p class="muted"><small>This shows field names only, not hidden record details. It helps confirm whether the public API provides service addresses.</small></p>
+  </details>
+  <?php endif; ?>
 </div>
 <div class="panel">
   <h2>Server readiness</h2>
