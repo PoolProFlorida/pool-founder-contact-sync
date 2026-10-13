@@ -8,11 +8,16 @@
 - Atomic local JSON snapshot storage; incomplete/failing requests preserve the previous snapshot
 - Customer vCard generation and multi-service-location mapping when the public API provides address fields
 - Read-only CardDAV skeleton: principal and address book PROPFIND discovery, query/multiget REPORT, card GET/HEAD, OPTIONS, write-method denial
+- Optional hashed-password dashboard login with secure cookie sessions, logout, CSRF validation and persistent login-attempt throttling
+- Read-only CardDAV app passwords: distinct hashed secrets for individual clients, one-time display, and revocation
+- Migration-safe authentication defaults (old CardDAV password retained until explicitly disabled); separate credential setup instructions in [AUTHENTICATION.md](AUTHENTICATION.md)
 - Fake demo snapshot generator and offline smoke tests
 
 **Verified in a deployed environment (user-reported):** authenticated public customer API retrieval, dashboard preview/search, and six non-destructive CardDAV protocol checks: authentication challenge, principal discovery, home discovery, address-book discovery, address-book REPORT, individual vCard GET and ETag. The protocol check returned contacts successfully. No customer data or private installation details were committed.
 
-**Not yet verified:** broad client compatibility, independent security review, Apache access-denial behavior across hosting configurations, and lead/address support in public API.
+**CI verified:** PHP syntax; session sign-in and logout; login throttling; per-client app-secret hashing and revocation; fake-data HTTP CardDAV legacy compatibility; and existing vCard/DAV tests.
+
+**Not yet verified:** opt-in dashboard login against an independently hosted production environment, broad client compatibility, independent security review, Apache access-denial behavior across hosting configurations, and lead/address support in public API.
 
 ## Next
 
