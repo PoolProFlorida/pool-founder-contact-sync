@@ -4,8 +4,8 @@
 
 - Standalone PHP installation under an Apache/cPanel site subdirectory with protected private files
 - Private dashboard: contact count, manual refresh, search/filter, vCard preview and download
-- Optional separate dashboard sign-in with secure sessions, CSRF protection, login throttling, and logout
-- Per-client revocable CardDAV app passwords; opt-in migration from legacy CardDAV credentials
+- Required dashboard session sign-in with secure sessions, CSRF protection, login throttling, and logout (legacy shared-password dashboard login removed)
+- Per-client revocable CardDAV app passwords; shared-password access disabled by default (explicit temporary migration flag available)
 - Customer fetch from documented read-only `GET /api/v1/customers` with pagination
 - Snapshot writes that preserve previous data when fetching fails, is incomplete, or causes a suspicious mass deletion
 - Read-only CardDAV: discovery, PROPFIND, REPORT, GET/HEAD and write-method denial
