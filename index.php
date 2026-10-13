@@ -116,6 +116,17 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
   </form>
   <p class="muted"><small>Read-only Pool Founder API request. Snapshot is replaced only after a successful complete fetch. Customer records only until a read-only leads endpoint is verified. Addresses appear only if returned by the public API.</small></p>
 </div>
+<div class="panel">
+  <h2>Server readiness</h2>
+  <div class="info">
+    <div><strong>PHP 8.1+</strong><br><?=version_compare(PHP_VERSION, '8.1.0', '>=') ? 'Ready' : 'Upgrade required'?> <span class="muted">(<?=h(PHP_VERSION)?>)</span></div>
+    <div><strong>cURL</strong><br><?=function_exists('curl_init') ? 'Ready' : 'PHP cURL extension missing'?></div>
+    <div><strong>DOM/XML</strong><br><?=class_exists('DOMDocument') ? 'Ready' : 'PHP DOM extension missing'?></div>
+    <div><strong>Private storage</strong><br><?=is_writable(__DIR__ . '/storage') ? 'Writable' : 'Not writable'?></div>
+    <div><strong>HTTPS</strong><br><?=Http::secure() ? 'Enabled' : 'Required'?></div>
+  </div>
+  <p class="muted"><small>Also verify from outside that <code>/.git/HEAD</code>, <code>/.env</code>, and <code>/storage/contacts.json</code> cannot be downloaded. This panel cannot verify Apache access rules.</small></p>
+</div>
 <?php if ($view !== ''): ?>
 <div class="panel">
   <h2>vCard preview: <?=h((string)$contacts[$view]['name'])?></h2>
