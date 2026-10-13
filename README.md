@@ -90,10 +90,21 @@ Both endpoints require the configured username and password. The dashboard lets 
 **Before entering any real credentials or fetching customer data**, verify that your server blocks direct HTTP access to:
 
 - /pool-founder-contact-sync/.env
+- /pool-founder-contact-sync/.git/HEAD
 - /pool-founder-contact-sync/storage/contacts.json
 - /pool-founder-contact-sync/src/Config.php
 
 They should return 403/404, never their contents. Verify HTTPS is enabled and the dashboard returns 401 when unauthenticated. If the server ignores .htaccess, **do not use this webroot deployment** until it is fixed or you move private files outside the document root.
+
+## Try it with fake data first
+
+Before connecting your Pool Founder API key, you can verify the dashboard and vCard links using one fake contact:
+
+    php scripts/demo.php
+
+This command works only in the terminal and **refuses to overwrite an existing snapshot**. Set your CardDAV username/password in `.env`, open the protected dashboard, then click **View** and **VCF**. The demo is visibly fake (`example.invalid` email and example address).
+
+When ready for real customers, click **Fetch customers & rebuild preview** on the dashboard after adding your real API key. A successful full refresh replaces the demo snapshot. If the refresh fails, the demo stays in place. Do not connect a production phone while demo data is loaded.
 
 ## Update
 
