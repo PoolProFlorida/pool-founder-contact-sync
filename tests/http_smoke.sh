@@ -2,11 +2,21 @@
 # Fake-data HTTP smoke test. Safe for CI; not a production web server.
 set -euo pipefail
 
+# Refuse to touch any active authentication stores or non-demo snapshots.
+if [[ -f storage/app-passwords.json || -f storage/login-attempts.json ]]; then
+    echo "Refusing to touch an existing authentication store." >&2
+    exit 1
+fi
+if [[ -f storage/contacts.json ]] && ! grep -q 'demo-only-001' storage/contacts.json; then
+    echo "Refusing to test against a non-demo snapshot." >&2
+    exit 1
+fi
+
 export CARDDAV_USERNAME='testuser'
 export DASHBOARD_USERNAME='testadmin'
 export DASHBOARD_PASSWORD_HASH="$(php -r 'echo password_hash("test-dashboard-password-for-fixtures", PASSWORD_DEFAULT);')"
 export CARDDAV_PASSWORD='test-old-shared-password-for-fixtures'
-export CARDDAV_LEGACY_ENABLED=0
+unset CARDDAV_LEGACY_ENABLED # Verify default-off behavior, not just an explicit off flag.
 port=18765
 base="http://127.0.0.1:$port/pool-founder-contact-sync"
 auth='' 
