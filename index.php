@@ -7,6 +7,7 @@ require __DIR__ . '/src/PoolFounderClient.php';
 require __DIR__ . '/src/VCard.php';
 require __DIR__ . '/src/Snapshot.php';
 require __DIR__ . '/src/ContactSearch.php';
+require __DIR__ . '/src/CronCommand.php';
 
 use PoolProFlorida\Config;
 use PoolProFlorida\Http;
@@ -14,10 +15,11 @@ use PoolProFlorida\DashboardAuth;
 use PoolProFlorida\PoolFounderClient;
 use PoolProFlorida\Snapshot;
 use PoolProFlorida\ContactSearch;
+use PoolProFlorida\CronCommand;
 
 $user = DashboardAuth::guard();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
-header("Content-Security-Policy: default-src 'none'; style-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 header('Cache-Control: private, no-store, max-age=0');
 
 $base = Http::base();
@@ -101,6 +103,7 @@ $apiConfigured = Config::get('POOL_FOUNDER_API_KEY') !== ''
 $lastUpdated = is_string($snapshot['updated_at'] ?? null) ? strtotime($snapshot['updated_at']) : false;
 $lastSyncLabel = $lastUpdated !== false ? gmdate('M j, Y · g:i A', $lastUpdated) . ' UTC' : 'Not synced';
 $cardavUrl = $base . '/carddav/';
+$cronCommand = CronCommand::build(__DIR__);
 $hasSearch = $search !== '' || $only !== 'all';
 
 function h(string $value): string { return Http::escape($value); }
@@ -117,6 +120,7 @@ function pageUrl(string $base, string $search, string $only, int $page): string
 <meta name="robots" content="noindex,nofollow">
 <title>Dashboard | Pool Founder Contact Sync</title>
 <link rel="stylesheet" href="<?=h($base . '/assets/admin.css')?>">
+<script src="<?=h($base . '/assets/admin.js')?>" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -199,6 +203,36 @@ function pageUrl(string $base, string $search, string $only, int $page): string
     <?php if (!$hasAddresses && $stats['total'] > 0): ?>
       <p class="card-caption">Service addresses are not available in the current customer API response. Existing contact details are unaffected.</p>
     <?php endif; ?>
+  </section>
+
+  <section class="card cron-card" aria-labelledby="cron-heading">
+    <div class="card-head">
+      <div>
+        <h2 id="cron-heading">Automatic refresh</h2>
+        <p class="subtle">Optional: have your server check for new customers every 30 minutes. Copy these into cPanel &rarr; Cron Jobs.</p>
+      </div>
+      <span class="status-tag">Setup required</span>
+    </div>
+    <div class="cron-fields">
+      <div class="field">
+        <label class="field-label" for="cron-schedule">Schedule (every 30 minutes)</label>
+        <div class="copy-field">
+          <input id="cron-schedule" type="text" value="<?=h(CronCommand::SCHEDULE)?>" readonly spellcheck="false" aria-describedby="cron-schedule-help">
+          <button class="btn secondary" type="button" data-copy-target="cron-schedule">Copy</button>
+        </div>
+        <p class="helper" id="cron-schedule-help">For cPanel's separate fields: Minute = <code>*/30</code>; Hour, Day, Month and Weekday = <code>*</code>.</p>
+      </div>
+      <div class="field">
+        <label class="field-label" for="cron-command">Command (paste into the Command box)</label>
+        <div class="copy-field">
+          <input id="cron-command" type="text" value="<?=h($cronCommand)?>" readonly spellcheck="false" aria-describedby="cron-command-help">
+          <button class="btn secondary" type="button" data-copy-target="cron-command">Copy</button>
+        </div>
+        <p class="helper" id="cron-command-help">Runs the local read-only sync script using the server's installation path. No passwords or public URLs.</p>
+      </div>
+    </div>
+    <p id="cron-copy-status" class="small-print" role="status" aria-live="polite"></p>
+    <p class="card-caption">This only shows setup instructions; <strong>the cron job is not installed yet.</strong> The PHP CLI path can vary by host, so adjust it in cPanel if needed. Successful runs stay quiet; failed runs can send cron email when hosting notifications are enabled.</p>
   </section>
 
   <?php if ($view !== ''): ?>

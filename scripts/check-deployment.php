@@ -79,6 +79,7 @@ foreach ([
     'Dashboard requires login' => ['', [302, 303, 401]],
     'CardDAV requires login' => ['carddav/', [401]],
     'Dashboard stylesheet' => ['assets/admin.css', [200]],
+    'Dashboard clipboard script' => ['assets/admin.js', [200]],
 ] as $label => [$path, $expected]) {
     try {
         $status = statusFor($base . $path);

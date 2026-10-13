@@ -140,6 +140,14 @@ When ready for real customers, click **Refresh contacts** on the dashboard after
 
 ## Optional scheduled refresh
 
+The private admin dashboard includes an **Automatic refresh** section with copy buttons for both the cron expression and the server-specific command. The default is every 30 minutes.
+
+In **cPanel → Advanced → Cron Jobs**, choose the *Every 30 Minutes* schedule (or set Minute to `*/30` and Hour, Day, Month, Weekday to `*`). Paste the command copied from **your own logged-in dashboard** into cPanel's **Command** box, then add the cron job. The dashboard shows setup instructions only; it does **not** create or enable a job for you.
+
+The command invokes the local CLI file at its actual installed path, without embedding credentials or using an HTTP URL. It silences successful refresh output while leaving errors on stderr so cPanel cron email can report failures if notifications are configured.
+
+**PHP executable paths differ among hosts.** The dashboard prefers a version-matched cPanel CLI binary when available, then common CLI paths. If cPanel requires a different executable, edit the start of the command in cPanel or set `CRON_PHP_BINARY=/absolute/path/to/php` in your private `.env`. Use PHP 8.1+ with the required extensions. Run the command once manually, or compare the dashboard's **Last successful refresh** after a scheduled run, to confirm that scheduling really works.
+
 To refresh from a trusted terminal or an existing cron scheduler:
 
     php scripts/sync.php

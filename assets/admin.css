@@ -66,6 +66,14 @@ form{margin:0}
 .endpoint{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;border-radius:10px;border:1px solid var(--line);background:#f7fafb}
 .endpoint code{font-size:12px;overflow-wrap:anywhere}
 .endpoint-label{color:var(--muted);font-size:12px;font-weight:700;flex-shrink:0}
+.cron-fields{display:grid;grid-template-columns:minmax(180px,.55fr) minmax(0,1.65fr);gap:18px}
+.copy-field{display:flex;align-items:stretch;gap:9px;min-width:0}
+.copy-field input[readonly]{flex:1;min-width:0;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--ink);background:#f7fafb;cursor:text}
+.copy-field .btn{flex-shrink:0}
+.cron-card .helper{margin:8px 0 0}
+.cron-card .card-caption{margin-top:10px}
+.cron-card #cron-copy-status{min-height:0;margin:8px 0 0}
+@media(max-width:680px){.cron-fields{grid-template-columns:1fr}.copy-field .btn{padding:10px 12px}}
 .filters{display:grid;grid-template-columns:minmax(210px,1fr) minmax(180px,210px) auto auto;gap:10px;margin:16px 0}
 input[type="text"],input[type="search"],input[type="password"],select{border:1px solid #c5d6df;background:#fff;border-radius:9px;padding:10px 12px;min-height:42px;max-width:100%;width:100%;color:var(--ink)}
 input:focus,select:focus{border-color:#318cae;box-shadow:0 0 0 3px #dff1f6;outline:0}

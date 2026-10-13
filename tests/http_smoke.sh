@@ -56,6 +56,14 @@ if grep -q "Inspect live API response" "$response"; then
     echo "The diagnostic control is still shown." >&2; exit 1;
 fi
 grep -q "Contacts dashboard" "$response" || { echo "Production dashboard missing." >&2; exit 1; }
+grep -q 'Automatic refresh' "$response" || { echo "Cron setup section missing from dashboard." >&2; exit 1; }
+grep -Fq 'value="*/30 * * * *"' "$response" || { echo "Cron schedule is incorrect." >&2; exit 1; }
+grep -Fq 'data-copy-target="cron-command"' "$response" || { echo "Cron copy control missing." >&2; exit 1; }
+grep -Fq '/scripts/sync.php' "$response" || { echo "Cron command must use the local sync CLI." >&2; exit 1; }
+
+code="$(curl -sS -o "$response" -w '%{http_code}' "$base/assets/admin.js")"
+[[ "$code" == "200" ]] || { echo "Local admin copy script unavailable." >&2; exit 1; }
+grep -Fq 'navigator.clipboard.writeText' "$response" || { echo "Admin clipboard script missing." >&2; exit 1; }
 
 root="$base/carddav/"
 code="$(curl -sS -u "$auth" -X PROPFIND -H 'Depth: 0' \
