@@ -123,7 +123,7 @@ function pageUrl(string $base, string $search, string $only, int $page): string
   <div class="topbar-inner">
     <a class="identity" href="<?=h($base . '/')?>" aria-label="Pool Founder Contact Sync dashboard">
       <span class="brand-mark" aria-hidden="true">PF</span>
-      <span class="identity-text"><strong>Pool Founder Contact Sync</strong><small>Private administration</small></span>
+      <span class="identity-text"><strong>Pool Founder Contact Sync</strong><small>Independent project by Pool Pro Florida</small></span>
     </a>
     <nav class="nav-links" aria-label="Main navigation">
       <a class="nav-link active" aria-current="page" href="<?=h($base . '/')?>">Dashboard</a>
