@@ -4,7 +4,7 @@
 
 A self-hosted, read-only PHP CardDAV project for [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) users.
 
-> **Status: Early testing release.** The customer preview and an initial CardDAV server are implemented, but **have not yet been tested against a live Pool Founder API or an iPhone CardDAV account**. Lead retrieval is not implemented because the public read-only leads endpoint is not yet confirmed. Not production-ready.
+> **Status: Early testing release.** Customer retrieval and the preview/search interface have been exercised against a live authenticated customer API. **The CardDAV protocol implementation is not yet independently verified with a real CardDAV client.** Lead retrieval is not implemented because the public read-only leads endpoint is not yet confirmed. Not production-ready.
 
 ## Why We Built This
 
@@ -38,7 +38,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 ### Current limitations
 
 - **Customer-only** until a public read/list-leads API is verified.
-- Service addresses are included **only if the public API supplies them**. Only the documented public API response determines which fields this standalone project can use.
+- Service addresses are included **only if the public API supplies them**. An authenticated three-record customer-list sample had no address field. See [public API field requirements](docs/PUBLIC_API_FIELDS.md) for a proposed read-only API extension.
 - No lead-to-customer duplicate reconciliation yet.
 - Only Basic Auth over HTTPS is supported. No edits from your phone will be sent back to Pool Founder.
 - The CardDAV handler is an early implementation; client interoperability, including Apple Contacts, must be tested.
