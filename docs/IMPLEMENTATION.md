@@ -16,12 +16,11 @@
 
 ## Next
 
-1. Validate Apache .htaccess protections and PHP cURL/DOM availability on a test host before adding credentials.
-2. Use demo data to test the dashboard, VCF download and CardDAV endpoint in a separate subdirectory.
-3. Test a full Pool Founder customer API snapshot and confirm which address fields the public API actually returns.
-4. Test on iPhone/macOS Contacts; adjust DAV XML and discovery compatibility as needed.
-5. Confirm public read-only lead listing endpoint and pagination before implementing leads. Define explicit lead-to-customer identity reconciliation to avoid duplicates.
-6. Only after all tests pass consider automatic scheduled refresh and a stable release.
+1. Run the independent, non-destructive CardDAV probe against additional DAV operations (especially addressbook-multiget, conditional GET/ETag and read-only rejection) using generic test data; do not require a phone.
+2. Verify web-server access denial for configuration files, stored snapshots and Git metadata before public release.
+3. Improve protocol compatibility based on these checks; document confirmed behavior without claiming full conformance.
+4. Wait for documented public read-only service address and lead APIs; support them only after their response schemas and pagination are confirmed.
+5. Once stable, add optional scheduled refresh with explicit deployment guidance and prepare a tagged test release.
 
 ## Security invariants
 
