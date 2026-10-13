@@ -23,6 +23,11 @@ if ($uri === $root || $uri === $root . '/' || $uri === $root . '/index.php') {
     require dirname(__DIR__) . '/index.php';
     return true;
 }
+if ($uri === $root . '/api-test.php') {
+    $_SERVER['SCRIPT_NAME'] = $root . '/api-test.php';
+    require dirname(__DIR__) . '/api-test.php';
+    return true;
+}
 if ($uri === $root . '/carddav' || str_starts_with($uri, $root . '/carddav/')) {
     $_SERVER['SCRIPT_NAME'] = $root . '/carddav.php';
     require dirname(__DIR__) . '/carddav.php';
