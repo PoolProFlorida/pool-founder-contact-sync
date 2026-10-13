@@ -92,7 +92,7 @@ function hApp(string $value): string { return Http::escape($value); }
   <div class="topbar-inner">
     <a class="identity" href="<?=hApp($base . '/')?>">
       <span class="brand-mark" aria-hidden="true">PF</span>
-      <span class="identity-text"><strong>Pool Founder Contact Sync</strong><small>Private administration</small></span>
+      <span class="identity-text"><strong>Pool Founder Contact Sync</strong><small>Independent project by Pool Pro Florida</small></span>
     </a>
     <nav class="nav-links" aria-label="Main navigation">
       <a class="nav-link" href="<?=hApp($base . '/')?>">Dashboard</a>
