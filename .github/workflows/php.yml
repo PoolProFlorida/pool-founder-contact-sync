@@ -17,3 +17,6 @@ jobs:
         run: php tests/vcard_test.php
       - name: Offline CardDAV smoke tests
         run: php tests/dav_test.php
+
+      - name: HTTP integration smoke test (fake data only)
+        run: bash tests/http_smoke.sh
