@@ -13,6 +13,8 @@ jobs:
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: Offline API pagination tests
         run: php tests/pagination_test.php
+      - name: Contact dashboard search tests
+        run: php tests/search_test.php
       - name: Offline vCard tests
         run: php tests/vcard_test.php
       - name: Offline CardDAV smoke tests
