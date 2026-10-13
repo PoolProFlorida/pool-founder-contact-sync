@@ -23,7 +23,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         http_response_code(403);
         exit('Invalid form token.');
     }
-    if (Config::get('POOL_FOUNDER_API_KEY') === '') {
+    if ((Config::get('POOL_FOUNDER_API_KEY') === '' || str_starts_with(Config::get('POOL_FOUNDER_API_KEY'), 'replace-with-'))) {
         $error = 'Set POOL_FOUNDER_API_KEY in .env before refreshing.';
     } else {
         try {
@@ -68,7 +68,7 @@ if ($requested !== '') {
 $base = Http::base();
 $updated = isset($snapshot['updated_at']) && is_string($snapshot['updated_at'])
     ? $snapshot['updated_at'] : 'Never';
-$apiConfigured = Config::get('POOL_FOUNDER_API_KEY') !== '';
+$apiConfigured = Config::get('POOL_FOUNDER_API_KEY') !== '' && !str_starts_with(Config::get('POOL_FOUNDER_API_KEY'), 'replace-with-');
 function h(string $value): string { return Http::escape($value); }
 ?>
 <!doctype html>
