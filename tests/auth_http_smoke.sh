@@ -63,6 +63,8 @@ code="$(curl -sS -c "$cookies" -b "$cookies" -o /dev/null -w '%{http_code}' -X P
 
 code="$(curl -sS -c "$cookies" -b "$cookies" -o "$response" -w '%{http_code}' "$base/")"
 [[ "$code" == "200" ]] || { echo "Authenticated dashboard access failed." >&2; exit 1; }
+grep -Fq 'id="cron-command"' "$response" || { echo "Logged-in admin does not show the cron command." >&2; exit 1; }
+grep -Fq 'scripts/sync.php' "$response" || { echo "Dashboard cron command is missing local CLI path." >&2; exit 1; }
 
 code="$(curl -sS -c "$cookies" -b "$cookies" -o "$response" -w '%{http_code}' "$base/app-passwords.php")"
 [[ "$code" == "200" ]] || { echo "App-password management unavailable." >&2; exit 1; }
