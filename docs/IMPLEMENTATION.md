@@ -23,7 +23,7 @@
 
 ## Security invariants
 
-- Pool Founder access is read-only; no app, WordPress or existing /sync/ integration is modified.
+- Pool Founder access is read-only; the app does not modify other applications or installations.
 - Never expose API keys, CardDAV password, saved contacts, internal notes, gate codes or pricing through the public repo or unauthenticated HTTP.
 - Both dashboard and CardDAV demand HTTPS with independent Basic Auth credentials.
 - Existing saved snapshot survives failed, incomplete or unexpectedly empty API reads.
