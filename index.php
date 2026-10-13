@@ -80,11 +80,19 @@ if ($requested !== '') {
 }
 
 $stats = ContactSearch::stats($contacts);
+$hasAddresses = $stats['with_address'] > 0;
+$filterOptions = [
+    'all' => 'All contacts',
+    'missing-phone' => 'Missing phone',
+    'missing-email' => 'Missing email',
+];
+if ($hasAddresses) {
+    $filterOptions['missing-address'] = 'Missing address';
+    $filterOptions['with-address'] = 'With address';
+}
 $search = is_string($_GET['q'] ?? null) ? substr(trim($_GET['q']), 0, 120) : '';
 $only = is_string($_GET['only'] ?? null) ? $_GET['only'] : 'all';
-if (!in_array($only, ['all','missing-phone','missing-address','missing-email','with-address'], true)) {
-    $only = 'all';
-}
+if (!array_key_exists($only, $filterOptions)) $only = 'all';
 $pageParam = is_scalar($_GET['page'] ?? null) ? (string)$_GET['page'] : '1';
 $pageNumber = ctype_digit($pageParam) ? min(100000, (int)$pageParam) : 1;
 $listing = ContactSearch::page(ContactSearch::filter($contacts, $search, $only), $pageNumber, 50);
@@ -92,7 +100,6 @@ $apiConfigured = Config::get('POOL_FOUNDER_API_KEY') !== ''
     && !str_starts_with(Config::get('POOL_FOUNDER_API_KEY'), 'replace-with-');
 $lastUpdated = is_string($snapshot['updated_at'] ?? null) ? strtotime($snapshot['updated_at']) : false;
 $lastSyncLabel = $lastUpdated !== false ? gmdate('M j, Y · g:i A', $lastUpdated) . ' UTC' : 'Not synced';
-$hasAddresses = $stats['with_address'] > 0;
 $cardavUrl = $base . '/carddav/';
 $hasSearch = $search !== '' || $only !== 'all';
 
@@ -228,13 +235,7 @@ function pageUrl(string $base, string $search, string $only, int $page): string
       <div class="field">
         <label for="contact-filter" class="field-label">Filter</label>
         <select id="contact-filter" name="only">
-          <?php foreach ([
-              'all' => 'All contacts',
-              'missing-phone' => 'Missing phone',
-              'missing-email' => 'Missing email',
-              'missing-address' => 'Missing address',
-              'with-address' => 'With address'
-          ] as $option => $label): ?>
+          <?php foreach ($filterOptions as $option => $label): ?>
           <option value="<?=h($option)?>" <?= $only === $option ? 'selected' : '' ?>><?=h($label)?></option>
           <?php endforeach; ?>
         </select>
