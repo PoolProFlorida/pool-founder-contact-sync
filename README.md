@@ -6,6 +6,22 @@ A community-driven, self-hosted PHP project to expose **Pool Founder customers a
 
 > **Status: Planning / pre-release.** No working CardDAV server has been implemented yet.
 
+## Why We Built This
+
+Hate getting a phone call and not knowing which customer is calling? We do too.
+
+Pool Founder already keeps track of your customers, leads, and service information. You can always open the app to find what you need. But why should you have to?
+
+That's why we built Pool Founder Contact Sync.
+
+It brings your customers and leads into your phone's native contacts, so you know who's calling before you answer. Customer names, service addresses, and other useful details are right there when you need them.
+
+No replacing Pool Founder. No extra app to manage. Just making the phone you already carry a little smarter.
+
+Built by Pool Pro Florida, shared with the pool service community.
+
+**Community Over Competition.**
+
 ## Planned v1
 
 - One address book named **Pool Founder Contacts**
