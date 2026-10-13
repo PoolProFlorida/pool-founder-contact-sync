@@ -3,8 +3,9 @@ declare(strict_types=1);
 namespace PoolProFlorida;
 
 /**
- * CardDAV uses independent, revocable client secrets. The legacy password is
- * accepted by default during migration and can be explicitly disabled later.
+ * CardDAV uses independent, revocable client secrets by default.
+ * Existing installations may explicitly opt into temporary legacy support
+ * during migration; new installations never enable it implicitly.
  * All clients retain the same stable DAV principal and address-book paths.
  */
 final class CardDavAuth
@@ -37,7 +38,7 @@ final class CardDavAuth
             self::challenge();
         }
 
-        $legacyAllowed = Config::get('CARDDAV_LEGACY_ENABLED', '1') !== '0';
+        $legacyAllowed = Config::get('CARDDAV_LEGACY_ENABLED', '0') === '1';
         $legacy = Config::get('CARDDAV_PASSWORD');
         $legacyValid = $legacyAllowed && strlen($legacy) >= 16
             && $legacy !== 'change-me' && !str_starts_with($legacy, 'replace-with-')
