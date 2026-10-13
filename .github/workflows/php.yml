@@ -11,6 +11,8 @@ jobs:
         run: php -v
       - name: Syntax-check all PHP files
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: API response privacy and field structure tests
+        run: php tests/api_inspector_test.php
       - name: Offline API pagination tests
         run: php tests/pagination_test.php
       - name: Contact dashboard search tests
