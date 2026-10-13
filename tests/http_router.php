@@ -35,6 +35,11 @@ if ($uri === $root . '/assets/admin.css') {
     readfile(dirname(__DIR__) . '/assets/admin.css');
     return true;
 }
+if ($uri === $root . '/assets/admin.js') {
+    header('Content-Type: application/javascript; charset=utf-8');
+    readfile(dirname(__DIR__) . '/assets/admin.js');
+    return true;
+}
 if ($uri === $root . '/carddav' || str_starts_with($uri, $root . '/carddav/')) {
     $_SERVER['SCRIPT_NAME'] = $root . '/carddav.php';
     require dirname(__DIR__) . '/carddav.php';
