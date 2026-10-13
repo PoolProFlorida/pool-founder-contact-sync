@@ -9,6 +9,7 @@ The public project is a **release candidate**, not a security-audited product. T
 - Back up the existing **private** .env file and the **entire** storage directory outside the public web root. The backup may contain customer details and credential hashes; secure it accordingly.
 - Record the current contact count and last successful refresh so you can compare after updating.
 - Preserve CARDDAV_USERNAME and all existing app-password hashes. Changing the username breaks existing CardDAV principal URLs.
+- **BEFORE pulling the new release:** configure and test `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD_HASH`, then migrate iPhone/other clients to individual app passwords. Legacy dashboard Basic Auth is removed; missing dashboard credentials return HTTP 503. The old shared CardDAV password is disabled by default; if needed briefly, explicitly set `CARDDAV_LEGACY_ENABLED=1` before updating.
 - The update must **never delete** storage/contacts.json, storage/app-passwords.json, or your private .env.
 - Use HTTPS and ensure Apache honors the bundled .htaccess rules. PHP 8.1+ with cURL and DOM/XML is required. If these rules are not enforced, do not use this webroot deployment.
 - Do **not** run scripts/demo.php or tests/http_smoke.sh on a live deployment. They are for separate, disposable fake-data checkouts.
@@ -19,7 +20,7 @@ From the installation directory after its release is merged:
 
     git pull --ff-only origin main
 
-Check that the new dashboard stylesheet exists as **assets/admin.css**.
+Check that **assets/admin.css** and **assets/admin.js** exist. Confirm the modern dashboard login is already configured in your private `.env` before updating.
 
 The public API diagnostic page has been removed; the new .htaccess additionally blocks any unlisted root PHP entry point. Developer tests stay in the repository, but are not available through the dashboard.
 
@@ -65,7 +66,7 @@ Check that principal discovery, address book discovery, REPORT, individual conta
 - Sign out, verify the private dashboard requires sign-in again.
 - Create a **temporary** named app password in the admin area and save it privately.
 - Test CardDAV access with that temporary password, then revoke it and confirm it no longer works.
-- The existing CardDAV credentials remain usable unless you explicitly set CARDDAV_LEGACY_ENABLED=0.
+- The old shared CardDAV password is disabled by default. It works temporarily **only** when explicitly set to `CARDDAV_LEGACY_ENABLED=1` and a valid `CARDDAV_PASSWORD` exists. Disable the migration flag once every client has a tested app password.
 - Disable the legacy credential **only after** all actual clients are migrated and verified. Do not change CardDAV_USERNAME.
 - The admin login and client app passwords are independent. Never publish a generated secret, password hash, or raw API response.
 
