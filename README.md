@@ -29,7 +29,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 - Self-contained PHP application installed in a **subdirectory** of an Apache/cPanel website
 - Password-protected dashboard to fetch customers and inspect/download vCards
 - Read-only customer fetch using documented GET /api/v1/customers with cursor pagination
-- Saved local snapshot: failed/partial fetches do **not** replace the previous contacts
+- Saved local snapshot: failed/partial fetches and suspicious mass deletions do **not** replace the previous contacts
 - Initial read-only CardDAV endpoints for principal discovery, PROPFIND, REPORT, GET, and HEAD
 - Separate credentials for API access and CardDAV access
 - Stable filenames derived from customer IDs; no WordPress, Cal.com, or AI dependency
@@ -41,7 +41,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 - No lead-to-customer duplicate reconciliation yet.
 - Only Basic Auth over HTTPS is supported. No edits from your phone will be sent back to Pool Founder.
 - The CardDAV handler is an early implementation; client interoperability, including Apple Contacts, must be tested.
-- No automatic timer/cron refresh configured. The dashboard refresh button fetches a snapshot manually.
+- No cron schedule is installed automatically. Refresh manually from the dashboard or run the optional CLI script from your own scheduler.
 
 ## Install in a subdirectory
 
@@ -84,7 +84,7 @@ Open:
 - **Dashboard:** https://example.com/pool-founder-contact-sync/
 - **CardDAV:** https://example.com/pool-founder-contact-sync/carddav/
 
-Both endpoints require the configured username and password. The dashboard lets you refresh customer data and click **View** or **VCF** for a contact.
+Both endpoints require the configured username and password. The dashboard lets you refresh customer data and click **View** or **VCF** for a contact. It also shows only the returned API **field names**, so you can confirm whether service-address fields are available without printing full raw customer records.
 
 **Before entering any real credentials or fetching customer data**, verify that your server blocks direct HTTP access to:
 
@@ -104,6 +104,16 @@ Before connecting your Pool Founder API key, you can verify the dashboard and vC
 This command works only in the terminal and **refuses to overwrite an existing snapshot**. Set your CardDAV username/password in `.env`, open the protected dashboard, then click **View** and **VCF**. The demo is visibly fake (`example.invalid` email and example address).
 
 When ready for real customers, click **Fetch customers & rebuild preview** on the dashboard after adding your real API key. A successful full refresh replaces the demo snapshot. If the refresh fails, the demo stays in place. Do not connect a production phone while demo data is loaded.
+
+## Optional scheduled refresh
+
+To refresh from a trusted terminal or an existing cron scheduler:
+
+    php scripts/sync.php
+
+This command reads your local `.env`, fetches all customer pages and writes a snapshot only after a complete successful response. On a failure it returns a nonzero exit status and preserves your last snapshot. It also **refuses unexpectedly large drops in customer count** (more than 25% when 10+ contacts were previously saved). That safeguard prevents a broken upstream response from removing most of a phone's contacts. To accept a truly intentional mass removal, review the data and make a backup before resetting the existing snapshot.
+
+Do not set up a cron schedule until the first manual refresh and CardDAV tests work.
 
 ## Update
 
