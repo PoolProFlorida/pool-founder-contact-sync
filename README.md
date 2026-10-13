@@ -4,7 +4,7 @@
 
 A self-hosted, read-only PHP CardDAV project for [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) users.
 
-> **Status: Early testing release.** Customer retrieval and the preview/search interface have been exercised against a live authenticated customer API. **The CardDAV protocol implementation is not yet independently verified with a real CardDAV client.** Lead retrieval is not implemented because the public read-only leads endpoint is not yet confirmed. Not production-ready.
+> **Status: Early testing release.** Live customer retrieval and the protected preview/search interface have been tested. A deployed CardDAV endpoint also passed an independent, read-only protocol check for authentication, discovery, address-book REPORT, and individual vCard GET/ETag using a non-phone client. **Broader CardDAV client compatibility and security review remain unverified.** Lead retrieval and service addresses await documented public API support; not production-ready.
 
 ## Why We Built This
 
