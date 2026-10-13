@@ -10,7 +10,7 @@ A community-driven, self-hosted PHP project to expose **Pool Founder customers a
 
 Hate getting a phone call and not knowing which customer is calling? We do too.
 
-Pool Founder already keeps track of your customers, leads, and service information. You can always open the app to find what you need. But why should you have to?
+[Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) already keeps track of your customers, leads, and service information. You can always open the app to find what you need. But why should you have to?
 
 That's why we built Pool Founder Contact Sync.
 
