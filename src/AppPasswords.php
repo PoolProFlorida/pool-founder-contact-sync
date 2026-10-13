@@ -12,6 +12,10 @@ final class AppPasswords
 
     public static function path(): string
     {
+        // Offline unit tests may provide a temporary store. Web requests never can.
+        if (PHP_SAPI === 'cli' && defined('PFCS_APP_PASSWORD_STORE')) {
+            return (string)constant('PFCS_APP_PASSWORD_STORE');
+        }
         return dirname(__DIR__) . '/storage/app-passwords.json';
     }
 
