@@ -30,9 +30,9 @@ foreach (['login.php', 'logout.php', 'app-passwords.php'] as $page) {
         return true;
     }
 }
-if ($uri === $root . '/api-test.php') {
-    $_SERVER['SCRIPT_NAME'] = $root . '/api-test.php';
-    require dirname(__DIR__) . '/api-test.php';
+if ($uri === $root . '/assets/admin.css') {
+    header('Content-Type: text/css; charset=utf-8');
+    readfile(dirname(__DIR__) . '/assets/admin.css');
     return true;
 }
 if ($uri === $root . '/carddav' || str_starts_with($uri, $root . '/carddav/')) {

@@ -4,7 +4,7 @@
 
 A self-hosted, read-only PHP CardDAV project for [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) users.
 
-> **Status: Early testing release.** Live customer retrieval and the protected preview/search interface have been tested. A deployed CardDAV endpoint also passed an independent, read-only protocol check for authentication, discovery, address-book REPORT, and individual vCard GET/ETag using a non-phone client. **Broader CardDAV client compatibility and security review remain unverified.** Lead retrieval and service addresses await documented public API support; not production-ready.
+> **Status: Release candidate — deployment verification required.** Live customer retrieval, private administration, and a deployed CardDAV endpoint have passed their initial checks. Automated PHP and HTTP integration tests cover the admin login, app-password management and read-only DAV behavior. **Full client interoperability and an independent security audit have not been completed.** Before public deployment, complete the [production checklist](docs/PRODUCTION_CHECKLIST.md). Service addresses and leads depend on documented public API support.
 
 ## Why We Built This
 
@@ -22,13 +22,14 @@ Built by Pool Pro Florida, shared with the pool service community.
 
 **Community Over Competition.**
 
-*The paragraph above describes the product's goal. The current test build syncs customers only; leads and service addresses depend on available read-only Pool Founder API fields.*
+*The paragraph above describes the product's goal. The current build syncs customers only; leads and service addresses depend on available read-only Pool Founder API fields.*
 
 ## What works in this build
 
 - Self-contained PHP application installed in a **subdirectory** of an Apache/cPanel website
-- Password-protected dashboard to fetch customers and inspect/download vCards; includes search, completeness filters, and paged results
-- On-demand **masked API response test**: view the actual customer API JSON structure without revealing customer values or changing the stored snapshot
+- Clean, responsive private administration to refresh customers, search contacts and download individual vCards
+- A consistent login screen and app-password management, with no customer API debugging output exposed through the browser
+- CLI-only deployment access checks for secrets, private storage, CardDAV authentication and public asset delivery
 - Read-only customer fetch using documented GET /api/v1/customers with cursor pagination
 - Saved local snapshot: failed/partial fetches and suspicious mass deletions do **not** replace the previous contacts
 - Initial read-only CardDAV endpoints for principal discovery, PROPFIND, REPORT, GET, and HEAD
@@ -68,7 +69,7 @@ Example deployment:
     └── pool-founder-contact-sync/    # This Git repository
         ├── .htaccess
         ├── .env                      # Create this locally; never commit
-        ├── index.php                 # Protected preview dashboard
+        ├── index.php                 # Protected administration dashboard
         ├── carddav.php
         ├── src/
         ├── storage/                  # Private snapshot, not web-accessible
@@ -99,13 +100,11 @@ Open:
 - **Dashboard:** https://example.com/pool-founder-contact-sync/
 - **CardDAV:** https://example.com/pool-founder-contact-sync/carddav/
 
-Both endpoints require the configured username and password. The dashboard lets you refresh customer data, search by name/phone/email/address, filter missing contact details, navigate all saved contacts, and click **View** or **VCF** for a contact. It also shows only the returned API **field names**, so you can confirm whether service-address fields are available without printing full raw customer records.
+The dashboard uses a separate cookie-based login when configured, or the older Basic Auth flow until migrated. CardDAV clients use HTTPS Basic Auth with individually revocable app passwords. The dashboard provides contact counts, a manual refresh action, search/filtering, vCard downloads, and access to app-password management.
 
-### Diagnose missing address fields
+### Public API field availability
 
-On the authenticated dashboard, click **Inspect live API response (masked)**. The test makes one read-only GET request to the public customer-list API for up to three records. Its output keeps the JSON object keys and nesting (for example, `data → serviceLocations → address → street`) but replaces **all customer values**, IDs, phones, names, addresses, and cursor tokens with redaction markers. It does not save the API response or send anything to GitHub. If an address key is absent, that absence helps distinguish a public API limitation from our vCard mapping. The inspection requires HTTPS, login credentials, and the dashboard's form token.
-
-Only share the **masked** diagnostic output; never publish raw API responses containing customer information.
+Service addresses appeared in none of the three masked customer records sampled during development; this is a public API field limitation, not a reason to expose raw customer responses in the dashboard. See [public API field requirements](docs/PUBLIC_API_FIELDS.md). Browser diagnostics are removed from the production administration.
 
 **Before entering any real credentials or fetching customer data**, verify that your server blocks direct HTTP access to:
 
@@ -124,7 +123,7 @@ Before connecting your Pool Founder API key, you can verify the dashboard and vC
 
 This command works only in the terminal and **refuses to overwrite an existing snapshot**. Set your CardDAV username/password in `.env`, open the protected dashboard, then click **View** and **VCF**. The demo is visibly fake (`example.invalid` email and example address).
 
-When ready for real customers, click **Fetch customers & rebuild preview** on the dashboard after adding your real API key. A successful full refresh replaces the demo snapshot. If the refresh fails, the demo stays in place. Do not connect a production phone while demo data is loaded.
+When ready for real customers, click **Refresh contacts** on the dashboard after adding your real API key. A successful full refresh replaces the demo snapshot. If the refresh fails, the demo stays in place. Do not connect a production phone while demo data is loaded.
 
 ## Optional scheduled refresh
 
@@ -142,7 +141,17 @@ Run inside the project directory:
 
     git pull --ff-only origin main
 
-Your local .env and storage snapshot are excluded from Git. Make a backup before major upgrades. This application is confined to its own installation directory.
+Your local .env and storage snapshot are excluded from Git. Make a backup before major upgrades. This application is confined to its own installation directory. See [production upgrade and security checks](docs/PRODUCTION_CHECKLIST.md) before applying changes.
+
+## Production deployment checks
+
+Before treating a deployment as production-ready, run the non-destructive external access check from the application directory:
+
+```bash
+php scripts/check-deployment.php https://example.com/pool-founder-contact-sync/
+```
+
+This checks that private files, customer snapshots, internal scripts and old debug endpoints are not reachable over public HTTPS. It also verifies that the dashboard and CardDAV reject unauthenticated requests. It does not display any saved customer records or credentials. **A successful check does not replace a security audit.** See the [production checklist](docs/PRODUCTION_CHECKLIST.md).
 
 ## Validate CardDAV without a phone
 
@@ -186,7 +195,7 @@ Do not paste your real password into shared terminals or logs; use a safer crede
 - Dashboard account password is stored only as a password hash; CardDAV client app passwords are stored only as hashes and may be revoked separately.
 - New dashboard login and CardDAV migration are opt-in; see the linked migration guide before enabling.
 - API key is used only for read-only GET customer calls; this project does not edit Pool Founder.
-- The web dashboard, VCF downloads, and CardDAV require HTTPS + Basic Auth.
+- All protected interfaces require HTTPS. The dashboard supports secure session login, while CardDAV clients authenticate with HTTPS Basic Auth and revocable app passwords.
 - The Apache .htaccess file denies access to private application directories and dotfiles. Check these rules on your particular host before going live.
 - Failed API fetches leave the previous saved snapshot intact.
 - Treat backups and the storage directory as sensitive personal data.

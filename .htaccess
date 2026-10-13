@@ -5,6 +5,9 @@ DirectoryIndex index.php
 RewriteEngine On
 # Block dot-directories such as .git and dotfiles such as .env.
 RewriteRule (^|/)\. - [F,END]
+# Only the public application entry points may execute from the web root.
+# Old diagnostics and future standalone PHP scripts must not be web-accessible.
+RewriteRule ^(?!index\.php$|login\.php$|logout\.php$|app-passwords\.php$|carddav\.php$)[^/]+\.php$ - [F,END,NC]
 # This rule applies only within the installed subdirectory.
 RewriteRule ^carddav(/.*)?$ carddav.php [END,QSA]
 RewriteRule ^(?:src|config|storage|scripts|tests|docs)(?:/|$) - [F,END,NC]

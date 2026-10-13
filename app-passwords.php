@@ -16,7 +16,7 @@ if (!DashboardAuth::enabled()) {
 }
 $user = DashboardAuth::guard();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
-header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'none'; style-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 header('Cache-Control: private, no-store');
 
 $base = Http::base();
@@ -35,7 +35,9 @@ if ($method === 'POST') {
             $created = AppPasswords::create(is_string($_POST['label'] ?? null) ? $_POST['label'] : '');
         } elseif ($action === 'revoke') {
             $id = is_string($_POST['id'] ?? null) ? $_POST['id'] : '';
-            if (!AppPasswords::revoke($id)) {
+            if (($_POST['confirm'] ?? '') !== 'yes') {
+                $error = 'Confirm the client password before revoking access.';
+            } elseif (!AppPasswords::revoke($id)) {
                 $error = 'Password not found or already revoked.';
             } else {
                 header('Location: ' . $base . '/app-passwords.php?revoked=1', true, 303);
@@ -62,6 +64,18 @@ try {
     $apps = [];
     $error = 'Unable to read saved app passwords. Check private storage and permissions.';
 }
+$legacyActive = Config::get('CARDDAV_LEGACY_ENABLED', '1') !== '0';
+$davUsername = Config::get('CARDDAV_USERNAME');
+$revokeCandidate = null;
+$revokeId = is_string($_GET['revoke'] ?? null) ? $_GET['revoke'] : '';
+if (preg_match('/^[a-f0-9]{24}$/D', $revokeId)) {
+    foreach ($apps as $app) {
+        if (hash_equals($app['id'], $revokeId)) {
+            $revokeCandidate = $app;
+            break;
+        }
+    }
+}
 function hApp(string $value): string { return Http::escape($value); }
 ?>
 <!doctype html>
@@ -70,67 +84,164 @@ function hApp(string $value): string { return Http::escape($value); }
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>CardDAV app passwords — Pool Founder Contact Sync</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f3f7fa;color:#173141;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:900px;margin:30px auto;padding:16px}
-section{background:#fff;border:1px solid #dce7ed;border-radius:14px;padding:22px;margin:16px 0}
-h1{font-size:28px;margin:8px 0}h2{font-size:19px;margin:0 0 10px}
-input{font:inherit;padding:11px;border:1px solid #b7ccd7;border-radius:8px;max-width:100%}
-button{font:inherit;background:#066d9b;color:white;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
-button.danger{background:#8d342e}
-p{margin:10px 0}a{color:#065f88}.muted{color:#546d78}
-table{border-collapse:collapse;width:100%}td,th{text-align:left;border-bottom:1px solid #e3ebef;padding:11px 8px}
-.code{padding:15px;background:#102c3a;color:#e9fcff;border-radius:8px;overflow-wrap:anywhere;font-size:17px}
-.good{padding:13px;background:#effaef;border-left:4px solid #278c4b}
-.error{padding:13px;background:#ffefeb;border-left:4px solid #b03323}
-form.inline{display:inline}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-</style>
+<title>App passwords | Pool Founder Contact Sync</title>
+<link rel="stylesheet" href="<?=hApp($base . '/assets/admin.css')?>">
 </head>
-<body><main>
-<p><a href="<?=hApp($base . '/')?>">← Dashboard</a></p>
-<h1>CardDAV app passwords</h1>
-<p class="muted">Each client gets a separate read-only password. You can revoke a client without changing dashboard access or other clients.</p>
-<?php if ($error !== ''): ?><p class="error"><?=hApp($error)?></p><?php endif; ?>
-<?php if (isset($_GET['revoked'])): ?><p class="good">The app password was revoked.</p><?php endif; ?>
-<?php if ($created !== null): ?>
-<section>
-<h2>Copy this new password now</h2>
-<p class="good">App password created for <strong><?=hApp($created['label'])?></strong>. This password is shown only once. Store it securely.</p>
-<p class="muted">Use the configured CardDAV username and the password below for this one client:</p>
-<div class="code"><code><?=hApp($created['password'])?></code></div>
-<p class="muted">The server stores only its password hash. Reloading this page will not show it again.</p>
-</section>
-<?php endif; ?>
-<section>
-<h2>Create app password</h2>
-<form method="post" action="<?=hApp($base . '/app-passwords.php')?>" class="row">
-<input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
-<input type="hidden" name="action" value="create">
-<label for="label">Client name</label>
-<input type="text" id="label" name="label" placeholder="Office laptop" minlength="2" maxlength="60" required>
-<button type="submit">Generate password</button>
-</form>
-</section>
-<section>
-<h2>Active app passwords (<?=count($apps)?>)</h2>
-<?php if (!$apps): ?><p class="muted">No active app passwords. The legacy CardDAV password remains available unless explicitly disabled.</p><?php else: ?>
-<table><thead><tr><th>Client</th><th>Created (UTC)</th><th>Action</th></tr></thead><tbody>
-<?php foreach ($apps as $app): ?><tr>
-<td><?=hApp($app['label'])?></td><td><?=hApp($app['created_at'])?></td>
-<td><form method="post" action="<?=hApp($base . '/app-passwords.php')?>" class="inline">
-<input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
-<input type="hidden" name="action" value="revoke">
-<input type="hidden" name="id" value="<?=hApp($app['id'])?>">
-<button type="submit" class="danger">Revoke</button>
-</form></td>
-</tr><?php endforeach; ?>
-</tbody></table>
-<?php endif; ?>
-</section>
-<section>
-<h2>Migrating existing clients</h2>
-<p>Existing CardDAV login details continue to work by default. Create and verify a new app password before disabling the old shared password.</p>
-<p>Once every client has moved to a new password, you may add <code>CARDDAV_LEGACY_ENABLED=0</code> to your local <code>.env</code>. This does not affect the dashboard login.</p>
-</section>
-</main></body></html>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="identity" href="<?=hApp($base . '/')?>">
+      <span class="brand-mark" aria-hidden="true">PF</span>
+      <span class="identity-text"><strong>Pool Founder Contact Sync</strong><small>Private administration</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a class="nav-link" href="<?=hApp($base . '/')?>">Dashboard</a>
+      <a class="nav-link active" aria-current="page" href="<?=hApp($base . '/app-passwords.php')?>">Manage CardDAV app passwords</a>
+      <form method="post" action="<?=hApp($base . '/logout.php')?>" class="nav-form">
+        <input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
+        <button type="submit" class="nav-button">Sign out</button>
+      </form>
+    </nav>
+  </div>
+</header>
+<main class="shell">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">Access management</span>
+      <h1>CardDAV app passwords</h1>
+      <p class="lead">Give each address-book client its own password. Revoke access whenever you need to, without disrupting other clients.</p>
+    </div>
+    <span class="status-tag <?= $legacyActive ? 'warning' : 'good' ?>">
+      <?= $legacyActive ? 'Shared password enabled' : 'App passwords only' ?>
+    </span>
+  </div>
+
+  <?php if ($error !== ''): ?><div class="alert error" role="alert"><?=hApp($error)?></div><?php endif; ?>
+  <?php if (isset($_GET['revoked'])): ?><div class="alert success" role="status">The app password was revoked successfully.</div><?php endif; ?>
+
+  <?php if ($revokeCandidate !== null): ?>
+  <section class="card" aria-labelledby="revoke-confirm-heading">
+    <span class="eyebrow">Confirm access change</span>
+    <h2 id="revoke-confirm-heading">Revoke <?=hApp($revokeCandidate['label'])?>?</h2>
+    <div class="alert warning">This client will lose access immediately. Existing contacts and other app passwords won't be affected.</div>
+    <form method="post" action="<?=hApp($base . '/app-passwords.php')?>" class="action-row">
+      <input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
+      <input type="hidden" name="action" value="revoke">
+      <input type="hidden" name="id" value="<?=hApp($revokeCandidate['id'])?>">
+      <input type="hidden" name="confirm" value="yes">
+      <button type="submit" class="btn danger">Yes, revoke password</button>
+      <a class="btn secondary" href="<?=hApp($base . '/app-passwords.php')?>">Cancel</a>
+    </form>
+  </section>
+  <?php endif; ?>
+
+  <?php if ($created !== null): ?>
+  <section class="card" aria-labelledby="new-password-heading">
+    <div class="card-head">
+      <div>
+        <span class="eyebrow">One-time password</span>
+        <h2 id="new-password-heading">Save this password now</h2>
+        <p class="subtle">Created for <strong><?=hApp($created['label'])?></strong>. It won't be displayed again after you leave or refresh this page.</p>
+      </div>
+    </div>
+    <div class="code-secret"><code><?=hApp($created['password'])?></code></div>
+    <p class="card-caption">Use username <strong><?=hApp($davUsername)?></strong> with this password in the CardDAV client. Store it in a password manager.</p>
+  </section>
+  <?php endif; ?>
+
+  <section class="stacked-cards" aria-label="Credential settings">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Create app password</h2>
+          <p class="subtle">Label it so you can recognize and revoke it later.</p>
+        </div>
+      </div>
+      <form method="post" action="<?=hApp($base . '/app-passwords.php')?>">
+        <input type="hidden" name="csrf" value="<?=hApp(DashboardAuth::csrf($user))?>">
+        <input type="hidden" name="action" value="create">
+        <div class="field">
+          <label class="field-label" for="label">Client name</label>
+          <input type="text" id="label" name="label" placeholder="Office laptop" minlength="2" maxlength="60" required>
+        </div>
+        <p class="card-caption">For example: Office laptop, Reception desktop, or Home computer.</p>
+        <div class="action-row">
+          <button type="submit" class="btn">Generate password</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Connection details</h2>
+          <p class="subtle">Your address-book URL and username stay the same across app passwords.</p>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-label">Server</span>
+        <code><?=hApp($base . '/carddav/')?></code>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-label">Username</span>
+        <code><?=hApp($davUsername)?></code>
+      </div>
+      <p class="card-caption">All client access is read-only over HTTPS. Client passwords do not grant dashboard access.</p>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="active-clients-heading">
+    <div class="card-head">
+      <div>
+        <h2 id="active-clients-heading">Active app passwords</h2>
+        <p class="subtle"><?=count($apps)?> client<?=count($apps) === 1 ? '' : 's' ?> currently authorized.</p>
+      </div>
+    </div>
+    <?php if (!$apps): ?>
+    <div class="empty-state">
+      <strong>No app passwords yet</strong>
+      <p>Generate one above when you're ready to connect a client.</p>
+    </div>
+    <?php else: ?>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Client</th><th>Created (UTC)</th><th>Access</th></tr></thead>
+        <tbody>
+        <?php foreach ($apps as $app): ?>
+        <tr>
+          <td><span class="cell-name"><?=hApp($app['label'])?></span></td>
+          <td><?=hApp($app['created_at'])?></td>
+          <td>
+            <a class="btn compact danger" href="<?=hApp($base . '/app-passwords.php?revoke=' . rawurlencode($app['id']))?>" aria-label="Review revocation for <?=hApp($app['label'])?>">Revoke</a>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <p class="card-caption">Revocation takes effect immediately. You can issue a new password at any time.</p>
+    <?php endif; ?>
+  </section>
+
+  <section class="card" aria-labelledby="migration-heading">
+    <div class="card-head">
+      <div>
+        <h2 id="migration-heading">Shared-password migration</h2>
+        <p class="subtle">Your original CardDAV password can stay active while you move clients over.</p>
+      </div>
+      <span class="status-tag <?= $legacyActive ? 'warning' : 'good' ?>"><?= $legacyActive ? 'Enabled' : 'Disabled' ?></span>
+    </div>
+    <?php if ($legacyActive): ?>
+    <div class="alert info">Existing clients will keep working. Once every client has its own tested app password, you can disable the shared password in your private server configuration.</div>
+    <p class="small-print">To disable the old credential after migration, set <code>CARDDAV_LEGACY_ENABLED=0</code> in your private <code>.env</code>. Do not change the CardDAV username or disable the shared password before testing replacements.</p>
+    <?php else: ?>
+    <div class="alert success">The shared CardDAV password is disabled. Only active app passwords can authenticate.</div>
+    <?php endif; ?>
+  </section>
+
+  <footer class="footline">
+    <span>Private access settings · Credentials are stored as password hashes</span>
+    <a href="https://github.com/PoolProFlorida/pool-founder-contact-sync" rel="noopener noreferrer">Pool Pro Florida · Community Over Competition ↗</a>
+  </footer>
+</main>
+</body>
+</html>

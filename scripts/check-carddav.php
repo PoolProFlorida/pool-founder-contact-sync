@@ -44,7 +44,11 @@ if (!str_ends_with($rootPath, '/')) {
     exit(2);
 }
 $user = Config::get('CARDDAV_USERNAME');
-$password = Config::get('CARDDAV_PASSWORD');
+// A temporary CLI environment variable can test an individual app password
+// after the legacy password has been disabled; it is never printed.
+$testPassword = getenv('CARDDAV_TEST_PASSWORD');
+$password = $testPassword !== false && $testPassword !== ''
+    ? (string)$testPassword : Config::get('CARDDAV_PASSWORD');
 if ($user === '' || strlen($password) < 16 || str_starts_with($password, 'replace-with-')) {
     fwrite(STDERR, "Configure CardDAV credentials in the local .env file.\n");
     exit(2);
