@@ -33,6 +33,8 @@ Built by Pool Pro Florida, shared with the pool service community.
 - Saved local snapshot: failed/partial fetches and suspicious mass deletions do **not** replace the previous contacts
 - Initial read-only CardDAV endpoints for principal discovery, PROPFIND, REPORT, GET, and HEAD
 - Separate credentials for API access and CardDAV access
+- **Optional modern dashboard authentication**: hashed admin password, HTTPS-only sessions, sign out, CSRF validation and login-attempt throttling
+- **Revocable CardDAV app passwords**: unique secret per client, hashed at rest, with one-time display; legacy credentials remain active until intentionally disabled
 - Stable filenames derived from customer IDs; no WordPress, Cal.com, or AI dependency
 
 ### Current limitations
@@ -40,9 +42,21 @@ Built by Pool Pro Florida, shared with the pool service community.
 - **Customer-only** until a public read/list-leads API is verified.
 - Service addresses are included **only if the public API supplies them**. An authenticated three-record customer-list sample had no address field. See [public API field requirements](docs/PUBLIC_API_FIELDS.md) for a proposed read-only API extension.
 - No lead-to-customer duplicate reconciliation yet.
-- Only Basic Auth over HTTPS is supported. No edits from your phone will be sent back to Pool Founder.
+- CardDAV uses Basic Auth over HTTPS (legacy or per-client app password). The dashboard can separately use cookie sessions. No client can write changes back to Pool Founder.
 - The CardDAV handler is an early implementation; client interoperability, including Apple Contacts, must be tested.
 - No cron schedule is installed automatically. Refresh manually from the dashboard or run the optional CLI script from your own scheduler.
+
+## Improved authentication (opt-in)
+
+A new dashboard login and independently revocable CardDAV client passwords are available **without changing existing credentials on upgrade**.
+
+See the step-by-step [authentication migration and rollback guide](docs/AUTHENTICATION.md). The new login activates only when **both** DASHBOARD_USERNAME and DASHBOARD_PASSWORD_HASH are configured in the private server .env. Use the interactive hash generator:
+
+    php scripts/hash-dashboard-password.php
+
+After signing in, choose **Manage CardDAV app passwords**. Issue one password per client. Your previous CardDAV username and password continue to work until you deliberately set CARDDAV_LEGACY_ENABLED=0 after validating the replacements.
+
+**Do not turn off the legacy CardDAV password or alter your CardDAV username during the initial upgrade.**
 
 ## Install in a subdirectory
 
@@ -169,6 +183,8 @@ Do not paste your real password into shared terminals or logs; use a safer crede
 ## Security
 
 - **Never commit credentials or customer data to this public repository.**
+- Dashboard account password is stored only as a password hash; CardDAV client app passwords are stored only as hashes and may be revoked separately.
+- New dashboard login and CardDAV migration are opt-in; see the linked migration guide before enabling.
 - API key is used only for read-only GET customer calls; this project does not edit Pool Founder.
 - The web dashboard, VCF downloads, and CardDAV require HTTPS + Basic Auth.
 - The Apache .htaccess file denies access to private application directories and dotfiles. Check these rules on your particular host before going live.
