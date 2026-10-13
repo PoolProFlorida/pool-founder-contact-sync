@@ -27,7 +27,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 ## What works in this build
 
 - Self-contained PHP application installed in a **subdirectory** of an Apache/cPanel website
-- Password-protected dashboard to fetch customers and inspect/download vCards
+- Password-protected dashboard to fetch customers and inspect/download vCards; includes search, completeness filters, and paged results
 - Read-only customer fetch using documented GET /api/v1/customers with cursor pagination
 - Saved local snapshot: failed/partial fetches and suspicious mass deletions do **not** replace the previous contacts
 - Initial read-only CardDAV endpoints for principal discovery, PROPFIND, REPORT, GET, and HEAD
@@ -37,7 +37,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 ### Current limitations
 
 - **Customer-only** until a public read/list-leads API is verified.
-- Service addresses are included **only if the public API supplies them**. Availability through a separate Pool Founder integration does not guarantee public API availability.
+- Service addresses are included **only if the public API supplies them**. Only the documented public API response determines which fields this standalone project can use.
 - No lead-to-customer duplicate reconciliation yet.
 - Only Basic Auth over HTTPS is supported. No edits from your phone will be sent back to Pool Founder.
 - The CardDAV handler is an early implementation; client interoperability, including Apple Contacts, must be tested.
@@ -84,7 +84,7 @@ Open:
 - **Dashboard:** https://example.com/pool-founder-contact-sync/
 - **CardDAV:** https://example.com/pool-founder-contact-sync/carddav/
 
-Both endpoints require the configured username and password. The dashboard lets you refresh customer data and click **View** or **VCF** for a contact. It also shows only the returned API **field names**, so you can confirm whether service-address fields are available without printing full raw customer records.
+Both endpoints require the configured username and password. The dashboard lets you refresh customer data, search by name/phone/email/address, filter missing contact details, navigate all saved contacts, and click **View** or **VCF** for a contact. It also shows only the returned API **field names**, so you can confirm whether service-address fields are available without printing full raw customer records.
 
 **Before entering any real credentials or fetching customer data**, verify that your server blocks direct HTTP access to:
 
