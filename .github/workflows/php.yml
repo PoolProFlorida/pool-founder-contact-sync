@@ -11,6 +11,8 @@ jobs:
         run: php -v
       - name: Syntax-check all PHP files
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Cron schedule and command generation tests
+        run: php tests/cron_command_test.php
       - name: API response privacy and field structure tests
         run: php tests/api_inspector_test.php
       - name: Dashboard session and app-password security tests
