@@ -23,6 +23,13 @@ if ($uri === $root || $uri === $root . '/' || $uri === $root . '/index.php') {
     require dirname(__DIR__) . '/index.php';
     return true;
 }
+foreach (['login.php', 'logout.php', 'app-passwords.php'] as $page) {
+    if ($uri === $root . '/' . $page) {
+        $_SERVER['SCRIPT_NAME'] = $root . '/' . $page;
+        require dirname(__DIR__) . '/' . $page;
+        return true;
+    }
+}
 if ($uri === $root . '/api-test.php') {
     $_SERVER['SCRIPT_NAME'] = $root . '/api-test.php';
     require dirname(__DIR__) . '/api-test.php';

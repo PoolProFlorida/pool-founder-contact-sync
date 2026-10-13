@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/src/Config.php';
 require __DIR__ . '/src/Http.php';
+require __DIR__ . '/src/DashboardAuth.php';
 require __DIR__ . '/src/PoolFounderClient.php';
 require __DIR__ . '/src/VCard.php';
 require __DIR__ . '/src/Snapshot.php';
@@ -9,11 +10,12 @@ require __DIR__ . '/src/ContactSearch.php';
 
 use PoolProFlorida\Config;
 use PoolProFlorida\Http;
+use PoolProFlorida\DashboardAuth;
 use PoolProFlorida\PoolFounderClient;
 use PoolProFlorida\Snapshot;
 use PoolProFlorida\ContactSearch;
 
-$user = Http::guard();
+$user = DashboardAuth::guard();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 
@@ -21,7 +23,7 @@ $error = '';
 $notice = '';
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $token = (string)($_POST['csrf'] ?? '');
-    if (!Http::validCsrf($user, $token)) {
+    if (!DashboardAuth::validCsrf($user, $token)) {
         http_response_code(403);
         exit('Invalid form token.');
     }
@@ -116,6 +118,15 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
 </head>
 <body><main>
 <div class="eyebrow">Pool Pro Florida · Private administration</div>
+<?php if (DashboardAuth::enabled()): ?>
+<nav style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:12px 0 20px">
+  <a href="<?=h(Http::base() . '/app-passwords.php')?>">Manage CardDAV app passwords</a>
+  <form method="post" action="<?=h(Http::base() . '/logout.php')?>" style="margin:0">
+    <input type="hidden" name="csrf" value="<?=h(DashboardAuth::csrf($user))?>">
+    <button type="submit">Sign out</button>
+  </form>
+</nav>
+<?php endif; ?>
 <h1>Pool Founder Contact Sync</h1>
 <p class="muted">Protected customer preview. Runs independently inside its own directory.</p>
 <?php if ($error !== ''): ?><p class="error"><?=h($error)?></p><?php endif; ?>
@@ -128,11 +139,11 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
     <div class="stat"><span class="muted">Last refresh (UTC)</span><b style="font-size:16px"><?=h($updated)?></b></div>
   </div>
   <form method="post" action="<?=h($base . '/index.php')?>">
-    <input type="hidden" name="csrf" value="<?=h(Http::csrf($user))?>">
+    <input type="hidden" name="csrf" value="<?=h(DashboardAuth::csrf($user))?>">
     <button type="submit" <?=$apiConfigured ? '' : 'disabled'?>>Fetch customers &amp; rebuild preview</button>
   </form>
   <form method="post" action="<?=h($base . '/api-test.php')?>">
-    <input type="hidden" name="csrf" value="<?=h(Http::csrf($user))?>">
+    <input type="hidden" name="csrf" value="<?=h(DashboardAuth::csrf($user))?>">
     <button type="submit" <?=$apiConfigured ? '' : 'disabled'?>>Inspect live API response (masked)</button>
   </form>
   <p class="muted"><small>The API response test fetches up to 3 records without changing the saved snapshot. It shows JSON keys and nesting while hiding actual customer values.</small></p>

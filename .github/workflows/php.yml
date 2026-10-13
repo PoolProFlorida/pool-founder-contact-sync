@@ -13,6 +13,8 @@ jobs:
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: API response privacy and field structure tests
         run: php tests/api_inspector_test.php
+      - name: Dashboard session and app-password security tests
+        run: php tests/auth_test.php
       - name: Offline API pagination tests
         run: php tests/pagination_test.php
       - name: Contact dashboard search tests
@@ -24,3 +26,5 @@ jobs:
 
       - name: HTTP integration smoke test (fake data only)
         run: bash tests/http_smoke.sh
+      - name: Authenticated session and app-password HTTP smoke test (fake data only)
+        run: bash tests/auth_http_smoke.sh
