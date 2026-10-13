@@ -56,7 +56,9 @@ final class Snapshot
                 'vcard' => $card
             ];
         }
-        ksort($contacts, SORT_STRING);
+        uasort($contacts, static fn(array $a, array $b): int =>
+            strcasecmp((string)$a['name'], (string)$b['name']) ?: strcmp((string)$a['resource'], (string)$b['resource'])
+        );
         $data = ['updated_at' => gmdate(DATE_ATOM), 'contacts' => $contacts];
 
         $folder = dirname(self::file());
