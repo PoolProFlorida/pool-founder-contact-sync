@@ -73,7 +73,7 @@ code="$(curl -sS -c "$cookies" -b "$cookies" -o "$response" -w '%{http_code}' -X
     --data-urlencode "csrf=$csrf" --data-urlencode 'action=create' \
     --data-urlencode 'label=Integration test client')"
 [[ "$code" == "200" ]] || { echo "App-password creation failed." >&2; exit 1; }
-secret="$(sed -n 's/.*<div class="code"><code>\([^<]*\)<\/code><\/div>.*/\1/p' "$response" | head -n1)"
+secret="$(sed -n 's/.*<div class="code-secret"><code>\([^<]*\)<\/code><\/div>.*/\1/p' "$response" | head -n1)"
 id="$(sed -n 's/.*name="id" value="\([a-f0-9]\{24\}\)".*/\1/p' "$response" | head -n1)"
 [[ $(printf %s "$secret" | wc -c) -ge 40 && $(printf %s "$id" | wc -c) -eq 24 ]] || {
     echo "Generated app password or revoke action missing." >&2; exit 1;
