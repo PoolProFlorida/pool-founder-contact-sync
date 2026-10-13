@@ -5,7 +5,9 @@
 config.local.php
 secrets.php
 
-# Dependencies and generated files
+# Local customer data and generated snapshots
+/storage/*
+!/storage/.gitkeep
 /vendor/
 /.phpunit.cache/
 /coverage/
