@@ -64,7 +64,7 @@ try {
     $apps = [];
     $error = 'Unable to read saved app passwords. Check private storage and permissions.';
 }
-$legacyActive = Config::get('CARDDAV_LEGACY_ENABLED', '1') !== '0';
+$legacyActive = Config::get('CARDDAV_LEGACY_ENABLED', '0') === '1';
 $davUsername = Config::get('CARDDAV_USERNAME');
 $revokeCandidate = null;
 $revokeId = is_string($_GET['revoke'] ?? null) ? $_GET['revoke'] : '';
@@ -226,15 +226,15 @@ function hApp(string $value): string { return Http::escape($value); }
     <div class="card-head">
       <div>
         <h2 id="migration-heading">Shared-password migration</h2>
-        <p class="subtle">Your original CardDAV password can stay active while you move clients over.</p>
+        <p class="subtle">Shared-password access is disabled by default. Temporarily enable it only when migrating existing clients.</p>
       </div>
       <span class="status-tag <?= $legacyActive ? 'warning' : 'good' ?>"><?= $legacyActive ? 'Enabled' : 'Disabled' ?></span>
     </div>
     <?php if ($legacyActive): ?>
-    <div class="alert info">Existing clients will keep working. Once every client has its own tested app password, you can disable the shared password in your private server configuration.</div>
-    <p class="small-print">To disable the old credential after migration, set <code>CARDDAV_LEGACY_ENABLED=0</code> in your private <code>.env</code>. Do not change the CardDAV username or disable the shared password before testing replacements.</p>
+    <div class="alert info">Temporary migration mode is active. Switch every client to an individual app password, then disable this mode in your private server configuration.</div>
+    <p class="small-print">Once all clients use tested app passwords, set <code>CARDDAV_LEGACY_ENABLED=0</code> or remove the setting from your private <code>.env</code>. Keep your CardDAV username unchanged.</p>
     <?php else: ?>
-    <div class="alert success">The shared CardDAV password is disabled. Only active app passwords can authenticate.</div>
+    <div class="alert success">Only active, individually revocable app passwords can authenticate. Shared passwords are disabled.</div>
     <?php endif; ?>
   </section>
 
