@@ -23,8 +23,15 @@ final class Snapshot
         $records = $client->customers(); // Fetch ALL pages before touching disk.
         if (count($records) > self::MAX_CONTACTS) throw new \RuntimeException('Contact limit exceeded');
         $existing = self::load();
-        if (count($records) === 0 && count($existing['contacts']) > 0) {
+        $previousCount = count($existing['contacts']);
+        $newCount = count($records);
+        if ($newCount === 0 && $previousCount > 0) {
             throw new \RuntimeException('API returned zero contacts; previous snapshot retained');
+        }
+        // Fail closed on unexpected mass removals: an upstream outage must not
+        // erase the majority of a phone's synced address book.
+        if ($previousCount >= 10 && $newCount < (int)ceil($previousCount * 0.75)) {
+            throw new \RuntimeException('Suspicious contact count drop; previous snapshot retained');
         }
 
         $contacts = [];
