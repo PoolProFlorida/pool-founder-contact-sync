@@ -50,19 +50,21 @@ Before opening the dashboard, generate a dashboard password hash using `php scri
 
 **Before adding real data**, verify the web server blocks direct public access to `.env`, `.git`, `src/`, `scripts/`, and `storage/`. If Apache ignores `.htaccess`, do not deploy under the public web root. Follow the [production checklist](docs/PRODUCTION_CHECKLIST.md).
 
-Open the HTTPS dashboard at:
+Open the **dashboard login page** at:
 
 ```text
-https://example.com/pool-founder-contact-sync/
+https://example.com/pool-founder-contact-sync/login.php
 ```
 
-Click **Refresh contacts** to build the first snapshot. Your private CardDAV endpoint is:
+Replace `example.com` and the installation folder with your own HTTPS address. The dashboard home page (`/pool-founder-contact-sync/`) also redirects to this login screen when you're signed out. Sign in using `DASHBOARD_USERNAME` and the **original password** you chose when generating `DASHBOARD_PASSWORD_HASH`—do not paste the hash into the login form. The old browser Basic Auth login is no longer supported.
+
+After signing in, click **Refresh contacts** to build the first snapshot. Your private CardDAV endpoint is:
 
 ```text
 https://example.com/pool-founder-contact-sync/carddav/
 ```
 
-Sign into the dashboard, select **Manage CardDAV app passwords**, and create a separate password for your iPhone. Add the address book as a **CardDAV account** using the stable CardDAV username and that one-time password. See [authentication setup and migration](docs/AUTHENTICATION.md).
+From the signed-in dashboard, select **Manage CardDAV app passwords** and generate a separate password for each device. Add the address book on your phone as a **CardDAV account** using `CARDDAV_USERNAME` and that generated **app password**, not the dashboard login password. See [authentication setup and migration](docs/AUTHENTICATION.md).
 
 ## Automatic sync
 
