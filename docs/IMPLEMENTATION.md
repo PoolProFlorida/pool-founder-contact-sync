@@ -18,11 +18,13 @@
 
 **CI verified:** PHP syntax; session sign-in and logout; login throttling; per-client app-secret hashing and revocation; fake-data HTTP CardDAV legacy compatibility; and existing vCard/DAV tests.
 
-**Not yet verified:** the refreshed admin on the live host after this update, broad CardDAV client interoperability, independent security review, Apache access-denial rules on every host, and lead/address support in the public API.
+**Deployed access checks (user-reported):** all 11 non-destructive HTTPS checks passed: private .env, Git metadata, customer snapshot, app-password store, application source, scripts, tests, and the retired diagnostic route were denied; unauthenticated dashboard and CardDAV requests were rejected; the admin stylesheet was served successfully. This is a basic access-control verification, not a security audit, and no hosting identifiers or customer data are published.
+
+**Not yet verified:** visual review and a fresh contact sync through the redesigned dashboard, broad CardDAV client interoperability, independent security review, Apache access-denial rules on other hosts, and lead/address support in the public API.
 
 ## Next
 
-1. Use the [production checklist](PRODUCTION_CHECKLIST.md) to deploy safely and confirm the new protected admin, private-file denial, manual refresh and CardDAV connection.
+1. Complete the remaining [production checklist](PRODUCTION_CHECKLIST.md) steps: visually review the redesigned admin, verify manual refresh keeps contact counts plausible, and recheck CardDAV access after the update.
 2. Run non-destructive DAV checks for multiget, conditional GET/ETag and read-only method rejection; do not require a phone.
 3. Review portability and security with external testers before marking a stable community release.
 4. Wait for documented public read-only service address and lead APIs before mapping those fields.
