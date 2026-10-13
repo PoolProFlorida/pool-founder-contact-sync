@@ -4,15 +4,17 @@ declare(strict_types=1);
 // On-demand, read-only public API structure test. Never writes a snapshot.
 require __DIR__ . '/src/Config.php';
 require __DIR__ . '/src/Http.php';
+require __DIR__ . '/src/DashboardAuth.php';
 require __DIR__ . '/src/PoolFounderClient.php';
 require __DIR__ . '/src/ApiInspector.php';
 
 use PoolProFlorida\ApiInspector;
 use PoolProFlorida\Config;
 use PoolProFlorida\Http;
+use PoolProFlorida\DashboardAuth;
 use PoolProFlorida\PoolFounderClient;
 
-$user = Http::guard();
+$user = DashboardAuth::guard();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'");
 header('Cache-Control: private, no-store, max-age=0');
@@ -23,7 +25,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     header('Content-Type: text/plain; charset=utf-8');
     exit("Run this test using the button in the protected dashboard.\n");
 }
-if (!Http::validCsrf($user, is_string($_POST['csrf'] ?? null) ? $_POST['csrf'] : '')) {
+if (!DashboardAuth::validCsrf($user, is_string($_POST['csrf'] ?? null) ? $_POST['csrf'] : '')) {
     http_response_code(403);
     header('Content-Type: text/plain; charset=utf-8');
     exit("Invalid form token.\n");
