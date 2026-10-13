@@ -74,7 +74,7 @@ code="$(curl -sS -c "$cookies" -b "$cookies" -o "$response" -w '%{http_code}' -X
     --data-urlencode 'label=Integration test client')"
 [[ "$code" == "200" ]] || { echo "App-password creation failed." >&2; exit 1; }
 secret="$(sed -n 's/.*<div class="code-secret"><code>\([^<]*\)<\/code><\/div>.*/\1/p' "$response" | head -n1)"
-id="$(sed -n 's/.*name="id" value="\([a-f0-9]\{24\}\)".*/\1/p' "$response" | head -n1)"
+id="$(sed -n 's/.*?revoke=\([a-f0-9]\{24\}\)".*/\1/p' "$response" | head -n1)"
 [[ $(printf %s "$secret" | wc -c) -ge 40 && $(printf %s "$id" | wc -c) -eq 24 ]] || {
     echo "Generated app password or revoke action missing." >&2; exit 1;
 }
@@ -88,9 +88,20 @@ code="$(curl -sS -u "$CARDDAV_USERNAME:$secret" -X PROPFIND -H 'Depth: 0' -o /de
 code="$(curl -sS -u "$CARDDAV_USERNAME:$CARDDAV_PASSWORD" -X PROPFIND -H 'Depth: 0' -o /dev/null -w '%{http_code}' "$root")"
 [[ "$code" == "207" ]] || { echo "Legacy CardDAV credential stopped working during migration." >&2; exit 1; }
 
+# A direct POST without confirmation must not revoke a client's password.
 code="$(curl -sS -c "$cookies" -b "$cookies" -o /dev/null -w '%{http_code}' -X POST "$base/app-passwords.php" \
     --data-urlencode "csrf=$csrf" --data-urlencode 'action=revoke' --data-urlencode "id=$id")"
-[[ "$code" == "303" ]] || { echo "App-password revoke failed." >&2; exit 1; }
+[[ "$code" == "200" ]] || { echo "Unconfirmed revocation request was accepted." >&2; exit 1; }
+code="$(curl -sS -u "$CARDDAV_USERNAME:$secret" -X PROPFIND -H 'Depth: 0' -o /dev/null -w '%{http_code}' "$root")"
+[[ "$code" == "207" ]] || { echo "Unconfirmed revocation disrupted access." >&2; exit 1; }
+
+code="$(curl -sS -c "$cookies" -b "$cookies" -o "$response" -w '%{http_code}' "$base/app-passwords.php?revoke=$id")"
+[[ "$code" == "200" ]] || { echo "Revocation confirmation page failed." >&2; exit 1; }
+grep -q "Yes, revoke password" "$response" || { echo "Revocation confirmation is missing." >&2; exit 1; }
+
+code="$(curl -sS -c "$cookies" -b "$cookies" -o /dev/null -w '%{http_code}' -X POST "$base/app-passwords.php" \
+    --data-urlencode "csrf=$csrf" --data-urlencode 'action=revoke' --data-urlencode "id=$id" --data-urlencode "confirm=yes")"
+[[ "$code" == "303" ]] || { echo "Confirmed app-password revoke failed." >&2; exit 1; }
 code="$(curl -sS -u "$CARDDAV_USERNAME:$secret" -X PROPFIND -H 'Depth: 0' -o /dev/null -w '%{http_code}' "$root")"
 [[ "$code" == "401" ]] || { echo "Revoked app password remains valid." >&2; exit 1; }
 code="$(curl -sS -u "$CARDDAV_USERNAME:$CARDDAV_PASSWORD" -X PROPFIND -H 'Depth: 0' -o /dev/null -w '%{http_code}' "$root")"
