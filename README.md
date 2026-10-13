@@ -14,7 +14,7 @@ A self-hosted, read-only customer address book for [Pool Founder](https://www.po
 - **Private, read-only CardDAV:** Contacts sync to your phone; no edits are sent back to Pool Founder.
 - **Customer profile links:** Each contact has a Work website link to its Pool Founder customer page. On iPhone, this currently opens the web page, **not necessarily the native app**.
 - **Admin dashboard:** Refresh, search, filter, preview, and download contacts.
-- **Safer access:** Optional separate dashboard login, secure sessions, and revocable CardDAV app passwords.
+- **Secure access:** Required dashboard session login and individually revocable CardDAV app passwords.
 - **Refresh options:** Manual dashboard refresh, or an optional cron job. The dashboard supplies a copyable command for a **30-minute** schedule.
 - **Failure protection:** Refreshes retain the last good snapshot on errors, incomplete responses, or suspicious large drops in contact count.
 
@@ -41,11 +41,12 @@ Edit the **private server-side** `.env`:
 
 ```dotenv
 POOL_FOUNDER_API_KEY=your-own-api-key
+DASHBOARD_USERNAME=admin
+DASHBOARD_PASSWORD_HASH='your-generated-hash'
 CARDDAV_USERNAME=poolcontacts
-CARDDAV_PASSWORD=your-own-long-random-password
 ```
 
-Use a unique password of at least 16 characters. The API key is for the documented **read-only customer endpoint**. Never commit `.env`, saved contacts, or passwords.
+Before opening the dashboard, generate a dashboard password hash using `php scripts/hash-dashboard-password.php` (interactive; minimum 16-character password) and paste that hash into your private `.env`. **Neither the old shared dashboard login nor a shared CardDAV password is enabled.** Never commit `.env`, saved contacts, or credentials.
 
 **Before adding real data**, verify the web server blocks direct public access to `.env`, `.git`, `src/`, `scripts/`, and `storage/`. If Apache ignores `.htaccess`, do not deploy under the public web root. Follow the [production checklist](docs/PRODUCTION_CHECKLIST.md).
 
@@ -61,7 +62,7 @@ Click **Refresh contacts** to build the first snapshot. Your private CardDAV end
 https://example.com/pool-founder-contact-sync/carddav/
 ```
 
-Add that address book as a **CardDAV account** on your phone, using the CardDAV username and password. For separate per-device passwords and a dashboard sign-in screen, follow the [authentication setup](docs/AUTHENTICATION.md). Preserve your existing CardDAV username when upgrading.
+Sign into the dashboard, select **Manage CardDAV app passwords**, and create a separate password for your iPhone. Add the address book as a **CardDAV account** using the stable CardDAV username and that one-time password. See [authentication setup and migration](docs/AUTHENTICATION.md).
 
 ## Automatic sync
 
@@ -103,7 +104,7 @@ From the installed project directory:
 git pull --ff-only origin main
 ```
 
-Back up your private `.env` and entire `storage/` directory before major updates. Both stay outside Git. See [upgrade and rollback steps](docs/PRODUCTION_CHECKLIST.md).
+**Existing installations:** before updating, verify your dashboard username/hash work and every device has a tested app password. Legacy dashboard Basic Auth is removed; shared CardDAV passwords are disabled by default. If you still need a short transition, explicitly set `CARDDAV_LEGACY_ENABLED=1` **before upgrading**, then disable it as soon as devices migrate. Back up `.env` and `storage/`. See [migration steps](docs/AUTHENTICATION.md).
 
 ## Community Over Competition
 
