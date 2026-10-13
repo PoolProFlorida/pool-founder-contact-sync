@@ -10,10 +10,7 @@ use PoolProFlorida\DashboardAuth;
 use PoolProFlorida\Http;
 use PoolProFlorida\LoginLimiter;
 
-if (!DashboardAuth::enabled()) {
-    header('Location: ' . Http::base() . '/', true, 303);
-    exit;
-}
+DashboardAuth::enabled();
 DashboardAuth::start();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 header("Content-Security-Policy: default-src 'none'; style-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
