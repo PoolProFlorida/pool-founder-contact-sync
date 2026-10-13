@@ -8,10 +8,7 @@ use PoolProFlorida\Config;
 use PoolProFlorida\DashboardAuth;
 use PoolProFlorida\Http;
 
-if (!DashboardAuth::enabled()) {
-    http_response_code(404);
-    exit('Not found.');
-}
+DashboardAuth::enabled();
 $user = DashboardAuth::guard();
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
