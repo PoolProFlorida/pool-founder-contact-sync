@@ -38,4 +38,21 @@ if (!str_ends_with($card, "\r\n")) {
     fwrite(STDERR, "vCard must end with CRLF\n");
     exit(1);
 }
-echo "vCard fixture test passed.\n";
+// Long Unicode names must fold without splitting UTF-8 characters.
+$longName = str_repeat('Zoë', 40);
+$unicodeCard = VCard::fromCustomer([
+    'id' => 'unicode-example',
+    'name' => $longName,
+    'serviceAddress' => '123 Example Avenue, Example City, FL 00000'
+]);
+foreach (explode("\r\n", trim($unicodeCard)) as $line) {
+    if (strlen($line) > 75) throw new RuntimeException('vCard line exceeds 75 octets');
+}
+$unfolded = str_replace("\r\n ", '', $unicodeCard);
+if (!str_contains($unfolded, 'FN:' . $longName)) {
+    throw new RuntimeException('Unicode name was corrupted while folding');
+}
+if (!str_contains($unfolded, 'ADR;TYPE=WORK:;;123 Example Avenue')) {
+    throw new RuntimeException('String service address was omitted');
+}
+echo "vCard fixture and UTF-8 folding tests passed.\n";
