@@ -132,7 +132,9 @@ function davHref(DOMDocument $xml, string $propertyName): string
 {
     $xpath = new DOMXPath($xml);
     $xpath->registerNamespace('D', 'DAV:');
-    $list = $xpath->query('//D:' . $propertyName . '/D:href');
+    $prefix = $propertyName === 'addressbook-home-set' ? 'C' : 'D';
+    $xpath->registerNamespace('C', 'urn:ietf:params:xml:ns:carddav');
+    $list = $xpath->query('//' . $prefix . ':' . $propertyName . '/D:href');
     if ($list === false || $list->length === 0) throw new RuntimeException('Missing DAV ' . $propertyName);
     return trim((string)$list->item(0)?->textContent);
 }
