@@ -74,7 +74,7 @@ function escapeLogin(string $value): string { return Http::escape($value); }
   <span class="brand-mark" aria-hidden="true">PF</span>
   <span class="eyebrow">Private administration</span>
   <h1>Welcome back</h1>
-  <p class="lead">Sign in to Pool Founder Contact Sync.</p>
+  <p class="lead">Pool Founder Contact Sync · Independent project by Pool Pro Florida</p>
 </header>
 <main class="login-wrap">
   <section class="login-card" aria-label="Dashboard sign in">
