@@ -42,6 +42,14 @@ resource="$(php -r "echo hash('sha256', 'customer:demo-only-001');").vcf"
 code="$(curl -sS -o /dev/null -w '%{http_code}' "$base/?download=$resource")"
 [[ "$code" == "401" ]] || { echo "vCard download must require authentication" >&2; exit 1; }
 
+# The on-demand diagnostic is only accessible after login, by POST with CSRF.
+code="$(curl -sS -o /dev/null -w '%{http_code}' "$base/api-test.php")"
+[[ "$code" == "401" ]] || { echo "API diagnostic requires authentication" >&2; exit 1; }
+code="$(curl -sS -u "$auth" -o /dev/null -w '%{http_code}' "$base/api-test.php")"
+[[ "$code" == "405" ]] || { echo "API diagnostic must not run from GET requests" >&2; exit 1; }
+code="$(curl -sS -u "$auth" -X POST -o /dev/null -w '%{http_code}' "$base/api-test.php")"
+[[ "$code" == "403" ]] || { echo "API diagnostic must require CSRF" >&2; exit 1; }
+
 root="$base/carddav/"
 code="$(curl -sS -u "$auth" -X PROPFIND -H 'Depth: 0' \
     -H 'Content-Type: application/xml' \
