@@ -80,7 +80,7 @@ function escapeLogin(string $value): string { return Http::escape($value); }
       <input type="hidden" name="csrf" value="<?=escapeLogin(DashboardAuth::csrf(Config::get('DASHBOARD_USERNAME')))?>">
       <div class="field">
         <label class="field-label" for="username">Username</label>
-        <input id="username" name="username" autocomplete="username" required maxlength="120" autofocus>
+        <input id="username" type="text" name="username" autocomplete="username" required maxlength="120" autofocus>
       </div>
       <div class="field">
         <label class="field-label" for="password">Password</label>
