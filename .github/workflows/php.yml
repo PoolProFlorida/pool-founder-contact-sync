@@ -1,0 +1,17 @@
+name: PHP tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP
+        run: php -v
+      - name: Syntax-check all PHP files
+        run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Offline vCard tests
+        run: php tests/vcard_test.php
+      - name: Offline CardDAV smoke tests
+        run: php tests/dav_test.php
