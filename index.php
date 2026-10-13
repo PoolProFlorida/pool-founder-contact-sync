@@ -5,11 +5,13 @@ require __DIR__ . '/src/Http.php';
 require __DIR__ . '/src/PoolFounderClient.php';
 require __DIR__ . '/src/VCard.php';
 require __DIR__ . '/src/Snapshot.php';
+require __DIR__ . '/src/ContactSearch.php';
 
 use PoolProFlorida\Config;
 use PoolProFlorida\Http;
 use PoolProFlorida\PoolFounderClient;
 use PoolProFlorida\Snapshot;
+use PoolProFlorida\ContactSearch;
 
 $user = Http::guard();
 header('X-Robots-Tag: noindex, nofollow, noarchive');
@@ -47,8 +49,8 @@ try {
     $error = 'Saved snapshot cannot be read. Check storage permissions and file contents.';
 }
 $contacts = $snapshot['contacts'];
-$view = isset($_GET['view']) ? (string)$_GET['view'] : '';
-$download = isset($_GET['download']) ? (string)$_GET['download'] : '';
+$view = isset($_GET['view']) && is_string($_GET['view']) ? $_GET['view'] : '';
+$download = isset($_GET['download']) && is_string($_GET['download']) ? $_GET['download'] : '';
 $requested = $download !== '' ? $download : $view;
 
 if ($requested !== '') {
@@ -69,6 +71,16 @@ $base = Http::base();
 $updated = isset($snapshot['updated_at']) && is_string($snapshot['updated_at'])
     ? $snapshot['updated_at'] : 'Never';
 $apiConfigured = Config::get('POOL_FOUNDER_API_KEY') !== '' && !str_starts_with(Config::get('POOL_FOUNDER_API_KEY'), 'replace-with-');
+$stats = ContactSearch::stats($contacts);
+$search = isset($_GET['q']) && is_string($_GET['q']) ? substr(trim($_GET['q']), 0, 120) : '';
+$only = isset($_GET['only']) && is_string($_GET['only']) ? $_GET['only'] : 'all';
+if (!in_array($only, ['all', 'missing-phone', 'missing-address', 'missing-email', 'with-address'], true)) $only = 'all';
+$pageParam = isset($_GET['page']) && is_scalar($_GET['page']) ? (string)$_GET['page'] : '1';
+$pageNumber = ctype_digit($pageParam) ? min(100000, (int)$pageParam) : 1;
+$listing = ContactSearch::page(ContactSearch::filter($contacts, $search, $only), $pageNumber, 50);
+function filterUrl(string $base, string $query, string $only, int $page): string {
+    return $base . '/?' . http_build_query(['q' => $query, 'only' => $only, 'page' => $page]);
+}
 function h(string $value): string { return Http::escape($value); }
 ?>
 <!doctype html>
@@ -87,7 +99,12 @@ p{margin:8px 0 16px}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:
 .muted{color:#536a78}.panel{background:#fff;border:1px solid #dce7ed;border-radius:14px;padding:22px;margin:18px 0;box-shadow:0 6px 20px #17314108}
 .info{display:flex;gap:28px;flex-wrap:wrap}.stat{min-width:150px}.stat b{display:block;font-size:25px}
 button,.btn{border:0;border-radius:9px;background:#006e9c;color:white;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}a{color:#075f88}a:hover{text-decoration:underline}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select{border:1px solid #bdced8;border-radius:8px;padding:11px 12px;background:white;color:#173141;font:inherit;min-width:0}
+.search-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:15px}
+.search-form input{flex:2;min-width:160px}.search-form select{flex:1;min-width:160px}
+.pager{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:15px 0}
+a{color:#075f88}a:hover{text-decoration:underline}
 .notice{background:#ecfbef;border-left:4px solid #27994e;padding:11px 14px}.error{background:#fff0ee;border-left:4px solid #b54133;padding:11px 14px}
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}
 th,td{padding:12px 10px;border-bottom:1px solid #e5eef3;vertical-align:top}
@@ -142,14 +159,42 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
 </div>
 <?php endif; ?>
 <div class="panel">
+  <h2>Contact coverage</h2>
+  <div class="info">
+    <div class="stat"><span class="muted">Total</span><b><?= $stats['total'] ?></b></div>
+    <div class="stat"><span class="muted">Phone numbers</span><b><?= $stats['with_phone'] ?></b></div>
+    <div class="stat"><span class="muted">Addresses</span><b><?= $stats['with_address'] ?></b></div>
+    <div class="stat"><span class="muted">Email addresses</span><b><?= $stats['with_email'] ?></b></div>
+  </div>
+  <p class="muted"><small>Coverage shows data present in the saved snapshot, not what exists inside the Pool Founder app.</small></p>
+</div>
+<div class="panel">
   <h2>Contacts <span class="muted">(<?=count($contacts)?>)</span></h2>
   <?php if (!$contacts): ?>
   <p class="muted">No saved customer snapshot yet. Add your API key and fetch customers to inspect the vCards.</p>
   <?php else: ?>
+  <form method="get" action="<?=h($base . '/')?>" class="search-form">
+    <label for="search"><strong>Find contact</strong></label>
+    <input id="search" type="search" name="q" maxlength="120" value="<?=h($search)?>" placeholder="Name, number, email or address">
+    <select name="only" aria-label="Contact filter">
+      <?php foreach ([
+        'all' => 'All contacts',
+        'missing-phone' => 'Missing phone',
+        'missing-address' => 'Missing address',
+        'missing-email' => 'Missing email',
+        'with-address' => 'With address'
+      ] as $option => $label): ?>
+      <option value="<?=h($option)?>" <?= $only === $option ? 'selected' : '' ?>><?=h($label)?></option>
+      <?php endforeach; ?>
+    </select>
+    <button type="submit">Search</button>
+    <a href="<?=h($base . '/')?>">Clear</a>
+  </form>
+  <p class="muted"><?= $listing['total'] ?> matching contact<?= $listing['total'] === 1 ? '' : 's' ?> · Page <?= $listing['page'] ?> of <?= $listing['pages'] ?></p>
   <div class="table-wrap"><table>
     <thead><tr><th>Name</th><th>Phone / Email</th><th>Service address</th><th>Day</th><th>vCard</th></tr></thead>
     <tbody>
-    <?php foreach (array_slice($contacts, 0, 250, true) as $resource => $contact): ?>
+    <?php foreach ($listing['contacts'] as $resource => $contact): ?>
       <tr>
         <td><?=h((string)$contact['name'])?></td>
         <td><?=h((string)$contact['phone'])?><br><span class="muted"><?=h((string)$contact['email'])?></span></td>
@@ -160,7 +205,13 @@ small{font-size:12px}@media(max-width:650px){main{padding:24px 12px}.panel{paddi
     <?php endforeach; ?>
     </tbody>
   </table></div>
-  <?php if (count($contacts) > 250): ?><p class="muted">Showing first 250 contacts. All saved contacts are available through CardDAV.</p><?php endif; ?>
+  <?php if ($listing['pages'] > 1): ?>
+  <nav class="pager" aria-label="Contact result pages">
+    <span><?php if ($listing['page'] > 1): ?><a href="<?=h(filterUrl($base, $search, $only, $listing['page'] - 1))?>">← Previous</a><?php endif; ?></span>
+    <span>Page <?= $listing['page'] ?> / <?= $listing['pages'] ?></span>
+    <span><?php if ($listing['page'] < $listing['pages']): ?><a href="<?=h(filterUrl($base, $search, $only, $listing['page'] + 1))?>">Next →</a><?php endif; ?></span>
+  </nav>
+  <?php endif; ?>
   <?php endif; ?>
 </div>
 <div class="panel"><h2>CardDAV</h2>
