@@ -28,7 +28,9 @@ final class LoginLimiter
 
     private static function update(string $operation): bool
     {
-        $file = dirname(__DIR__) . '/storage/login-attempts.json';
+        $file = PHP_SAPI === 'cli' && defined('PFCS_LOGIN_LIMITER_STORE')
+            ? (string)constant('PFCS_LOGIN_LIMITER_STORE')
+            : dirname(__DIR__) . '/storage/login-attempts.json';
         $key = hash_hmac('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'), Config::get('DASHBOARD_PASSWORD_HASH'));
         $handle = fopen($file, 'c+');
         if ($handle === false) throw new \RuntimeException('Unable to open private login protection store.');
