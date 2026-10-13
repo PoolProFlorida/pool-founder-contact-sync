@@ -3,6 +3,8 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
+# Block dot-directories such as .git and dotfiles such as .env.
+RewriteRule (^|/)\. - [F,END]
 # This rule applies only within the installed subdirectory.
 RewriteRule ^carddav(/.*)?$ carddav.php [END,QSA]
 RewriteRule ^(?:src|config|storage|scripts|tests|docs)(?:/|$) - [F,END,NC]
