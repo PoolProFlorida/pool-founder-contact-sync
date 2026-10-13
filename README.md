@@ -28,6 +28,7 @@ Built by Pool Pro Florida, shared with the pool service community.
 
 - Self-contained PHP application installed in a **subdirectory** of an Apache/cPanel website
 - Password-protected dashboard to fetch customers and inspect/download vCards; includes search, completeness filters, and paged results
+- On-demand **masked API response test**: view the actual customer API JSON structure without revealing customer values or changing the stored snapshot
 - Read-only customer fetch using documented GET /api/v1/customers with cursor pagination
 - Saved local snapshot: failed/partial fetches and suspicious mass deletions do **not** replace the previous contacts
 - Initial read-only CardDAV endpoints for principal discovery, PROPFIND, REPORT, GET, and HEAD
@@ -86,6 +87,12 @@ Open:
 
 Both endpoints require the configured username and password. The dashboard lets you refresh customer data, search by name/phone/email/address, filter missing contact details, navigate all saved contacts, and click **View** or **VCF** for a contact. It also shows only the returned API **field names**, so you can confirm whether service-address fields are available without printing full raw customer records.
 
+### Diagnose missing address fields
+
+On the authenticated dashboard, click **Inspect live API response (masked)**. The test makes one read-only GET request to the public customer-list API for up to three records. Its output keeps the JSON object keys and nesting (for example, `data → serviceLocations → address → street`) but replaces **all customer values**, IDs, phones, names, addresses, and cursor tokens with redaction markers. It does not save the API response or send anything to GitHub. If an address key is absent, that absence helps distinguish a public API limitation from our vCard mapping. The inspection requires HTTPS, login credentials, and the dashboard's form token.
+
+Only share the **masked** diagnostic output; never publish raw API responses containing customer information.
+
 **Before entering any real credentials or fetching customer data**, verify that your server blocks direct HTTP access to:
 
 - /pool-founder-contact-sync/.env
@@ -128,6 +135,7 @@ Your local .env and storage snapshot are excluded from Git. Make a backup before
 From the checkout:
 
     php tests/vcard_test.php
+    php tests/api_inspector_test.php
     php tests/dav_test.php
     php scripts/preview.php
 
