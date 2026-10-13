@@ -46,7 +46,7 @@ Never commit API credentials, CardDAV passwords, customer data, or logs containi
 
 Created by **[Pool Pro Florida](https://poolproflorida.com)** for the pool service community. Practical tools that help pool professionals spend less time on administration and more time serving customers.
 
-Independent community project, not an official Pool Founder product.
+Independent community project, not an official [Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida) product.
 
 ## Contributing
 
