@@ -30,6 +30,18 @@ code="$(curl -sS -u "$auth" -o "$response" -w '%{http_code}' "$base/")"
 [[ "$code" == "200" ]] || { echo "Dashboard request failed: HTTP $code" >&2; exit 1; }
 grep -q 'Alex Example' "$response" || { echo "Fake demo contact not visible" >&2; exit 1; }
 
+code="$(curl -sS -u "$auth" -o "$response" -w '%{http_code}' "$base/?q=Alex")"
+[[ "$code" == "200" ]] || { echo "Authenticated dashboard search failed" >&2; exit 1; }
+grep -q 'Alex Example' "$response" || { echo "Contact search did not return matching demo contact" >&2; exit 1; }
+
+code="$(curl -sS -u "$auth" -o "$response" -w '%{http_code}' "$base/?only=missing-phone")"
+[[ "$code" == "200" ]] || { echo "Missing-phone dashboard filter failed" >&2; exit 1; }
+grep -q '0 matching contacts' "$response" || { echo "Missing-phone filter returned the wrong count" >&2; exit 1; }
+
+resource="$(php -r "echo hash('sha256', 'customer:demo-only-001');").vcf"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "$base/?download=$resource")"
+[[ "$code" == "401" ]] || { echo "vCard download must require authentication" >&2; exit 1; }
+
 root="$base/carddav/"
 code="$(curl -sS -u "$auth" -X PROPFIND -H 'Depth: 0' \
     -H 'Content-Type: application/xml' \
