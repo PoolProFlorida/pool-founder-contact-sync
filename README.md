@@ -22,6 +22,16 @@ Runs on Apache/cPanel with PHP. No WordPress, AI, or extra phone app required.
 
 **Current limits:** This build syncs **customers only**, not leads. Service addresses appear only if Pool Founder's public customer API supplies them; they were absent in sampled responses. See [public API field requests](docs/PUBLIC_API_FIELDS.md). Native-app deep links are not confirmed.
 
+## Get access to Pool Founder's API
+
+New to Pool Founder? Here's how to get started:
+
+1. **[Sign up for Pool Founder](https://www.poolfounder.com/?ref=pool-pro-florida)** and create your account.
+2. Get an API key from your Pool Founder account.
+3. Add that key to `POOL_FOUNDER_API_KEY` in your private `.env` file during installation.
+
+Keep your API key private. Never put it in GitHub, screenshots, or public documentation.
+
 ## Install
 
 **Requirements:** PHP 8.1+ with cURL and DOM/XML, Apache 2.4+ with working `.htaccess` / `mod_rewrite`, HTTPS, and writable private storage.
