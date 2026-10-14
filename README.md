@@ -66,6 +66,24 @@ https://example.com/pool-founder-contact-sync/carddav/
 
 From the signed-in dashboard, select **Manage CardDAV app passwords** and generate a separate password for each device. Add the address book on your phone as a **CardDAV account** using `CARDDAV_USERNAME` and that generated **app password**, not the dashboard login password. See [authentication setup and migration](docs/AUTHENTICATION.md).
 
+## macOS Contacts setup
+
+On a Mac, open **Contacts → Add Account → Other Contacts Account → CardDAV**. If automatic or manual setup fails with “Unable to verify account name or password,” choose **Advanced** and enter the server details separately:
+
+| Setting | Example |
+| --- | --- |
+| Account type | Advanced (CardDAV) |
+| User name | The `CARDDAV_USERNAME` configured for your installation (for example, `poolcontacts`) |
+| Password | A **device-specific CardDAV app password** generated in the dashboard; not the dashboard password |
+| Server address | `example.com` |
+| Server path | `/pool-founder-contact-sync/carddav/` (adjust if installed in another directory) |
+| Port | `443` |
+| Use SSL | Enabled |
+
+For this example, the complete endpoint is `https://example.com/pool-founder-contact-sync/carddav/`. Replace the domain and installation path with your own. Do not put the full URL into the server-address field when the Advanced form has a separate server-path field.
+
+These settings have been reported to work in macOS Contacts on one installation; other macOS versions and hosts may behave differently. If sign-in still fails, verify the app password and check CardDAV discovery/authentication on your server before revoking a working device's credentials.
+
 ## Automatic sync
 
 **Phone ↔ address book:** Your CardDAV client periodically retrieves the current server snapshot.
